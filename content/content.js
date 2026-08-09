@@ -171,7 +171,9 @@
       chunks.push(globalThis.ostNoLabelsCss());
     }
     // Dopo il tema, cosi' la misura scelta prevale sul padding della cornice.
-    chunks.push(globalThis.ostIconSizeCss(profile.iconSize));
+    // Il tema serve anche a riproporre i suoi livelli di sfondo, che altrimenti
+    // il disegno spostato sullo sfondo coprirebbe.
+    chunks.push(globalThis.ostIconSizeCss(profile.iconSize, profile.theme));
 
     if (settings.copyFieldNames) {
       chunks.push(globalThis.ostToastCss());
@@ -495,6 +497,7 @@
         hideTrialBanners();
         hideNeutralizeBanner();
         applyBadge();
+        applyIconArtwork();
         if (wallpaperMode() === "video") {
           ensureVideoLayer();
         }
@@ -653,6 +656,41 @@
     return false;
   });
 
+  /**
+   * Passa il disegno dell'icona a una variabile CSS, cosi' il foglio di stile
+   * puo' usarlo come livello di sfondo. Si scrive solo una proprieta'
+   * personalizzata e una classe: nessuna modifica alla struttura del DOM ne'
+   * all'attributo `src`, che restano di Odoo.
+   */
+  function applyIconArtwork() {
+    const wanted = settings.enabled && profile.iconSize !== "l";
+
+    for (const icon of document.querySelectorAll(".o_apps .o_app_icon")) {
+      const marked = icon.classList.contains("ost-art");
+
+      if (!wanted) {
+        if (marked) {
+          icon.classList.remove("ost-art");
+          icon.style.removeProperty("--ost-art");
+          // Va cancellato anche il promemoria della sorgente: senza, al
+          // rientro in una misura ridotta il controllo qui sotto crederebbe
+          // che l'icona sia gia' a posto e non rimetterebbe mai la classe.
+          delete icon.dataset.ostArt;
+        }
+        continue;
+      }
+      const src = icon.currentSrc || icon.src;
+      // Si salta solo se la sorgente e' la stessa E il segno e' ancora
+      // applicato: sono due condizioni distinte e vanno verificate entrambe.
+      if (!src || (marked && icon.dataset.ostArt === src)) {
+        continue;
+      }
+      icon.dataset.ostArt = src;
+      icon.style.setProperty("--ost-art", `url("${src}")`);
+      icon.classList.add("ost-art");
+    }
+  }
+
   // ------------------------------------------------------------------
   // 5b. Copia del nome tecnico di un campo
   // ------------------------------------------------------------------
@@ -741,8 +779,27 @@
     if (!name) {
       return;
     }
-    // Nessun preventDefault: cliccando una `<label>` il campo collegato deve
-    // continuare a ricevere il fuoco come sempre.
+    const node = event.target.nodeType === 3 ? event.target.parentElement : event.target;
+    const label = node && node.closest ? node.closest("label") : null;
+
+    if (label) {
+      // Cliccare l'etichetta di una casella la commuta: con la copia attiva
+      // quel comportamento va tolto, altrimenti si cambia un valore mentre si
+      // voleva solo leggere il nome del campo. Vale solo per le `<label>`: le
+      // intestazioni di elenco continuano a ordinare la colonna.
+      event.preventDefault();
+
+      const control =
+        label.control || (label.htmlFor ? document.getElementById(label.htmlFor) : null);
+      const isToggle =
+        control && /^(checkbox|radio)$/i.test(control.type || "");
+      if (isToggle || label.querySelector('input[type="checkbox"], input[type="radio"]')) {
+        // Alcuni widget commutano da un gestore proprio, che `preventDefault`
+        // non ferma: si blocca anche la risalita dell'evento.
+        event.stopPropagation();
+      }
+    }
+
     copyText(name);
     showToast("Copied");
   }
@@ -754,6 +811,7 @@
   function applyAll() {
     applyBadge();
     applyCss();
+    applyIconArtwork();
     applyMediaLayer();
     if (settings.enabled && (settings.hideTrialBanner || settings.hideNeutralizeBanner)) {
       hideTrialBanners();

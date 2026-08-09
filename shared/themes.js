@@ -242,23 +242,72 @@
   /**
    * Dimensione del disegno dentro l'icona.
    *
-   * Agisce solo sul `padding`: il riquadro dell'elemento, e quindi lo sfondo
-   * disegnato dal tema, non cambia mai misura. Si rimpicciolisce soltanto
-   * l'immagine al suo interno. I valori sono in pixel e non in percentuale
-   * perche' un padding percentuale si calcola sulla larghezza del contenitore,
-   * non su quella dell'icona, e produrrebbe rientri enormi.
+   * Il padding da solo non basta: un `<img>` ritaglia il proprio contenuto
+   * sulla curva del content box, e quel raggio vale `border-radius - padding`.
+   * Con la cornice circolare il content box torna quindi ad essere un cerchio
+   * qualunque padding si usi, ed e' il motivo per cui l'icona veniva tosata
+   * agli angoli e sembrava rimpicciolita due volte.
+   *
+   * Percio' il disegno viene spostato su un livello di sfondo: lo sfondo e'
+   * ritagliato da `background-clip`, non dalla curva del contenuto, quindi un
+   * quadrato dentro a un cerchio resta un quadrato. `background-origin:
+   * content-box` lo rimpicciolisce, `background-clip: border-box` gli lascia
+   * tutto il cerchio a disposizione.
+   *
+   * Il contenuto originale dell'immagine viene sostituito da una gif
+   * trasparente di un pixel: l'elemento resta lo stesso, non si tocca ne' la
+   * struttura del DOM ne' l'attributo `src`.
    */
-  const ICON_PADDING = { m: "14px", s: "22px" };
+  const ICON_PADDING = { m: "7px", s: "14px" };
+  const BLANK_PIXEL =
+    "data:image/gif;base64,R0lGODlhAQABAIAAAAAAAP///yH5BAEAAAAALAAAAAABAAEAAAIBRAA7";
 
-  globalThis.ostIconSizeCss = function (size) {
+  /**
+   * Livelli di sfondo che alcuni temi usano per la cornice. Vanno accodati
+   * dopo il disegno, altrimenti il gradiente lo coprirebbe.
+   */
+  const FRAME_LAYERS = {
+    aurora: {
+      image: "linear-gradient(135deg, #714b67, #017e84)",
+      origin: "border-box",
+      clip: "border-box",
+      size: "auto",
+    },
+    rgb: {
+      image:
+        "linear-gradient(rgba(10, 12, 18, 0.55), rgba(10, 12, 18, 0.55))," +
+        " conic-gradient(from var(--ost-angle), #ff0040, #ff8a00, #ffee00," +
+        " #22d36a, #00c2ff, #7a5cff, #ff00c8, #ff0040)",
+      origin: "padding-box, border-box",
+      clip: "padding-box, border-box",
+      size: "auto, auto",
+    },
+  };
+
+  globalThis.ostIconSizeCss = function (size, theme) {
     const pad = ICON_PADDING[size];
     if (!pad) {
       return "";
     }
+    const extra = FRAME_LAYERS[theme];
+    const images = extra ? `var(--ost-art), ${extra.image}` : "var(--ost-art)";
+    const origins = extra ? `content-box, ${extra.origin}` : "content-box";
+    const clips = extra ? `border-box, ${extra.clip}` : "border-box";
+    const sizes = extra ? `contain, ${extra.size}` : "contain";
+
+    // La classe la mette il content script solo dopo aver letto la sorgente:
+    // senza, le icone resterebbero vuote finche' non parte lo script.
     return `
-      ${ICON} {
+      ${ICON}.ost-art {
         box-sizing: border-box !important;
         padding: ${pad} !important;
+        content: url("${BLANK_PIXEL}") !important;
+        background-image: ${images} !important;
+        background-origin: ${origins} !important;
+        background-clip: ${clips} !important;
+        background-size: ${sizes} !important;
+        background-repeat: no-repeat !important;
+        background-position: center !important;
       }
     `;
   };
