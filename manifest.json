@@ -1,0 +1,35 @@
+{
+  "manifest_version": 3,
+  "name": "UI Enhancer for Odoo",
+  "version": "0.6.0",
+  "description": "Hide the Odoo.sh trial banner, open in developer mode, and restyle the app drawer with themes and an image or video wallpaper.",
+  "permissions": ["storage", "unlimitedStorage"],
+  "host_permissions": [
+    "*://*.odoo.com/*",
+    "*://*.odoo.sh/*"
+  ],
+  "action": {
+    "default_title": "UI Enhancer for Odoo",
+    "default_popup": "popup/popup.html",
+    "default_icon": {
+      "16": "icons/icon16.png",
+      "32": "icons/icon32.png",
+      "48": "icons/icon48.png",
+      "128": "icons/icon128.png"
+    }
+  },
+  "icons": {
+    "16": "icons/icon16.png",
+    "32": "icons/icon32.png",
+    "48": "icons/icon48.png",
+    "128": "icons/icon128.png"
+  },
+  "content_scripts": [
+    {
+      "matches": ["*://*.odoo.com/*", "*://*.odoo.sh/*"],
+      "js": ["shared/defaults.js", "shared/themes.js", "content/content.js"],
+      "run_at": "document_start",
+      "all_frames": false
+    }
+  ]
+}
