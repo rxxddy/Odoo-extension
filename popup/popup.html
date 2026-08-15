@@ -10,7 +10,7 @@
     <div class="head-row">
       <img src="/icons/icon128.png" class="mark" alt="Logo" aria-hidden="true">
       <div class="head-text">
-        <h1>UI Enhancer for Odoo</h1>
+        <h1>UI Enhancer for Odoo <span class="badge-beta">BETA</span></h1>
         <p class="dbchip" id="dbchip">
           <svg viewBox="0 0 16 16" aria-hidden="true"><ellipse cx="8" cy="3.4" rx="5.4" ry="2.2"/><path d="M2.6 3.4v9.2c0 1.2 2.4 2.2 5.4 2.2s5.4-1 5.4-2.2V3.4"/><path d="M2.6 8c0 1.2 2.4 2.2 5.4 2.2s5.4-1 5.4-2.2"/></svg>
           <span id="dbname">no Odoo page</span>
@@ -23,13 +23,6 @@
     </div>
   </header>
 
-  <!-- Mostrato solo fuori da *.odoo.com/*.odoo.sh: li' il content script parte
-       gia' da solo, offrire il pulsante sarebbe ridondante. -->
-  <div class="recognize" id="recognizeBanner" hidden>
-    <p class="hint">This page wasn't detected as Odoo. Is it one?</p>
-    <button type="button" class="btn btn-accent" id="recognizeBtn">Enable here</button>
-  </div>
-
   <nav class="tabs" role="tablist" aria-label="Sections">
     <button type="button" class="tab" data-screen="appearance" role="tab">Appearance</button>
     <button type="button" class="tab" data-screen="developer" role="tab">Developer</button>
@@ -38,6 +31,13 @@
 
   <!-- ===================== ASPETTO ===================== -->
   <main id="screenAppearance">
+
+    <!-- Mostrato solo fuori da *.odoo.com/*.odoo.sh: li' il content script
+         parte gia' da solo, offrire il pulsante sarebbe ridondante. -->
+    <div class="card recognize" id="recognizeBanner" hidden>
+      <p class="hint">This page wasn't detected as Odoo. Is it one?</p>
+      <button type="button" class="btn btn-accent" id="recognizeBtn">Enable here</button>
+    </div>
 
     <!-- ---------- Costruttore icone ---------- -->
     <section class="card">
@@ -141,7 +141,9 @@
           <div class="folderchip" id="folderChip" hidden>
             <svg viewBox="0 0 16 16" aria-hidden="true"><path d="M2.5 4.5h3.8l1.2 1.5h6v6.5a1 1 0 0 1-1 1h-9a1 1 0 0 1-1-1v-8z"/></svg>
             <span id="folderName"></span>
-            <button type="button" class="chip-go" id="reconnectFolder" hidden>Reconnect</button>
+            <button type="button" class="chip-x chip-sync" id="syncFolder" aria-label="Sync folder" title="Check the folder for new files">
+              <svg viewBox="0 0 16 16" aria-hidden="true"><path d="M13 8a5 5 0 0 1-8.9 3.1M3 8a5 5 0 0 1 8.9-3.1M12 4.5v3h-3M4 11.5v-3h3"/></svg>
+            </button>
             <button type="button" class="chip-x" id="unlinkFolder" aria-label="Unlink folder" title="Unlink folder">
               <svg viewBox="0 0 16 16" aria-hidden="true"><path d="M4.5 4.5l7 7M11.5 4.5l-7 7"/></svg>
             </button>
@@ -275,8 +277,14 @@
   </section>
 
   <footer class="foot" id="foot">
-    <span class="saved" id="saved">Saved</span>
-    <button type="button" class="btn btn-quiet" id="reset">Reset all</button>
+    <a class="foot-help" href="https://discord.gg/WCe8E7ANz" target="_blank" rel="noopener noreferrer">
+      <svg viewBox="0 0 16 16" aria-hidden="true"><path d="M5.5 4.5C7 3.7 8.9 3.7 10.5 4.5M4.5 11c2.3 1 4.7 1 7 0M5.7 10c-2-.6-2.7-1.4-2.7-1.4S3.7 5 5.5 4.1M10.3 10c2-.6 2.7-1.4 2.7-1.4S12.3 5 10.5 4.1M6 8.2c0 .5-.4 1-.9 1s-.9-.5-.9-1 .4-1 .9-1 .9.5.9 1M10.8 8.2c0 .5-.4 1-.9 1s-.9-.5-.9-1 .4-1 .9-1 .9.5.9 1"/></svg>
+      Need help? Join our Discord
+    </a>
+    <div class="foot-right">
+      <span class="saved" id="saved">Saved</span>
+      <button type="button" class="btn btn-quiet" id="reset">Reset all</button>
+    </div>
   </footer>
 
   <script src="../shared/defaults.js"></script>

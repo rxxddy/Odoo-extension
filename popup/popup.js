@@ -47,13 +47,17 @@
   //
   // La maniglia non e' persistita: la File System Access API richiede
   // comunque un gesto dell'utente per riconcedere il permesso, quindi
-  // conservarla costringerebbe a un secondo click di conferma.
+  // conservarla costringerebbe a un secondo click di conferma. Il contenuto
+  // gia' letto (folderEntries) e' invece incorporato e sopravvive da solo,
+  // vedi readFolder/restoreFolder piu' sotto.
   let folderHandle = null;
-  // Maniglia recuperata da IndexedDB il cui permesso va riconfermato con un
-  // gesto dell'utente: si mostra il nome con un pulsante di riconnessione.
-  let folderPending = null;
+  let folderLinked = false;
   let folderName = "";
   let folderEntries = [];
+  // Tetto al numero di immagini/video importati da una cartella: ognuno
+  // viene incorporato come data URL, quindi una cartella enorme gonfierebbe
+  // la cache in IndexedDB.
+  const FOLDER_LIMIT = 60;
 
   const profileKey = () => globalThis.ostProfileKey(profileHost);
   const mediaKey = () => globalThis.ostMediaKey(profileHost);
@@ -117,11 +121,16 @@
 
   /** Voce corrispondente allo sfondo attualmente applicato, se presente. */
   function activeEntry() {
-    if (profile.wallpaperKind !== "image") {
-      return null;
+    if (profile.wallpaperKind === "video") {
+      // Solo i video presi da cartella sono tracciati in galleria: quelli
+      // caricati a mano o linkati non vi compaiono affatto, coerentemente.
+      if (profile.videoSource !== "folder" || !media.videoName) {
+        return null;
+      }
+      return { source: "folder", kind: "video", name: media.videoName };
     }
     if (profile.imageSource === "url") {
-      return { source: "url", url: profile.imageUrl, name: profile.imageUrl };
+      return { source: "url", kind: "image", url: profile.imageUrl, name: profile.imageUrl };
     }
     // Per caricamenti e cartelle il confronto e' sul nome del file: e' l'unico
     // dato che sopravvive sia al salvataggio in libreria sia alla rilettura
@@ -129,7 +138,7 @@
     if (!profile.imageName) {
       return null;
     }
-    return { source: profile.imageSource, url: "", name: profile.imageName };
+    return { source: profile.imageSource, kind: "image", url: "", name: profile.imageName };
   }
 
   /**
@@ -232,15 +241,41 @@
     folder: '<svg viewBox="0 0 16 16" aria-hidden="true"><path d="M2.5 4.5h3.8l1.2 1.5h6v6.5a1 1 0 0 1-1 1h-9a1 1 0 0 1-1-1v-8z"/></svg>',
   };
   const ORIGIN_LABEL = { url: "Added by link", file: "Uploaded", folder: "From a local folder" };
+  // Seconda icona, riservata al tipo: si affianca a quella di provenienza
+  // solo per i video (sempre da cartella), cosi' si vede a colpo d'occhio che
+  // non e' una foto senza dover aprire la voce.
+  const KIND_SVG = {
+    video:
+      '<svg viewBox="0 0 16 16" aria-hidden="true"><rect x="2" y="4.5" width="8.5" height="7" rx="1.2"/><path d="M10.5 6.7 14 5v6l-3.5-1.7z"/></svg>',
+  };
+
+  /** Icone di provenienza (sempre) e di tipo (solo per i video) su una voce. */
+  function appendEntryBadges(item, entry, prefix) {
+    const origin = document.createElement("span");
+    origin.className = `${prefix}-origin`;
+    origin.innerHTML = ORIGIN_SVG[entry.source] || ORIGIN_SVG.file;
+    if (ORIGIN_LABEL[entry.source]) {
+      origin.title = ORIGIN_LABEL[entry.source];
+    }
+    item.appendChild(origin);
+
+    if ((entry.kind || "image") === "video") {
+      const kind = document.createElement("span");
+      kind.className = `${prefix}-origin ${prefix}-kind`;
+      kind.innerHTML = KIND_SVG.video;
+      kind.title = "Video";
+      item.appendChild(kind);
+    }
+  }
 
   /**
    * Voci mostrate in galleria e in libreria: la cronologia salvata piu' le
-   * immagini della cartella collegata. Quelle della cartella sono lette dal
-   * vivo e non salvate, quindi una foto cancellata dal disco sparisce da sola
-   * invece di restare come voce morta.
+   * immagini e i video della cartella collegata. Quelle della cartella sono
+   * lette dal vivo e non salvate stabilmente, quindi un file cancellato dal
+   * disco sparisce da solo invece di restare come voce morta.
    */
   function allEntries() {
-    return library.concat(folderEntries.filter((e) => e.kind === "image").map(folderAsEntry));
+    return library.concat(folderEntries.map(folderAsEntry));
   }
 
   /** Adatta una voce di cartella alla forma usata da galleria e libreria. */
@@ -248,13 +283,13 @@
     return {
       id: "folder:" + fe.name,
       source: "folder",
+      kind: fe.kind,
       url: "",
-      data: "",
+      data: fe.data,
       thumb: fe.thumbUrl,
       name: fe.name,
       size: 0,
       usedAt: fe.usedAt || 0,
-      handle: fe.handle,
     };
   }
 
@@ -284,17 +319,14 @@
       if (entry) {
         const item = document.createElement("button");
         item.type = "button";
-        item.className = "gal-item";
-        item.style.backgroundImage = `url("${entry.thumb}")`;
+        item.className = "gal-item" + ((entry.kind || "image") === "video" ? " is-video" : "");
+        item.style.backgroundImage = entry.thumb ? `url("${entry.thumb}")` : "";
         item.title = entry.name || entry.url;
         item.setAttribute("aria-label", `Use ${entry.name || entry.url}`);
         item.setAttribute("aria-current", String(isSameEntry(entry, active)));
         item.addEventListener("click", () => pickEntry(entry));
 
-        const origin = document.createElement("span");
-        origin.className = "gal-origin";
-        origin.innerHTML = ORIGIN_SVG[entry.source] || ORIGIN_SVG.file;
-        item.appendChild(origin);
+        appendEntryBadges(item, entry, "gal");
         box.appendChild(item);
       } else {
         const slot = document.createElement("button");
@@ -317,9 +349,12 @@
     box.appendChild(more);
   }
 
-  /** Due voci coincidono se hanno la stessa provenienza e lo stesso contenuto. */
+  /** Due voci coincidono se sono dello stesso tipo, provenienza e contenuto. */
   function isSameEntry(a, b) {
     if (!a || !b) {
+      return false;
+    }
+    if ((a.kind || "image") !== (b.kind || "image")) {
       return false;
     }
     if (a.source === "url" || b.source === "url") {
@@ -328,10 +363,13 @@
     return a.source === b.source && a.name === b.name;
   }
 
-  /** Applica una voce, leggendo il file dalla cartella se serve. */
+  /** Applica una voce: un video prende il posto dello sfondo video attivo, il resto passa per applyEntry. */
   function pickEntry(entry) {
-    if (entry.source === "folder" && entry.handle) {
-      applyFolderImage(entry.handle);
+    if ((entry.kind || "image") === "video") {
+      media.videoData = entry.data;
+      media.videoName = entry.name;
+      saveMedia();
+      updateProfile({ videoSource: "folder", wallpaperKind: "video", wallpaperEnabled: true });
       return;
     }
     applyEntry(entry);
@@ -342,26 +380,22 @@
    * (il permesso e' scaduto e serve un click), cartella collegata.
    */
   function renderFolderBar() {
-    const known = !!(folderHandle || folderPending);
-    el("folderChip").hidden = !known;
-    el("pickFolder").hidden = known;
+    el("folderChip").hidden = !folderLinked;
+    el("pickFolder").hidden = folderLinked;
     el("folderName").textContent = folderName;
-    el("reconnectFolder").hidden = !folderPending;
-    if (folderPending) {
-      el("folderNote").textContent = "Folder remembered — reconnect it to read the files again.";
+  }
+
+  async function syncFolder() {
+    if (folderHandle) {
+      await readFolder();
+      render();
+      return;
     }
+    await pickFolder();
   }
 
   function unlinkFolder() {
-    // Le anteprime erano object URL: senza revoca resterebbero in memoria
-    // per tutta la vita del popup.
-    for (const entry of folderEntries) {
-      if (entry.thumbUrl) {
-        URL.revokeObjectURL(entry.thumbUrl);
-      }
-    }
     folderHandle = null;
-    folderPending = null;
     folderName = "";
     folderEntries = [];
     idbDelete(FOLDER_KEY);
@@ -382,8 +416,10 @@
     for (const entry of entries) {
       const item = document.createElement("div");
       item.className = "lib-item";
-      item.style.backgroundImage = `url("${entry.thumb}")`;
+      item.style.backgroundImage = entry.thumb ? `url("${entry.thumb}")` : "";
       item.setAttribute("aria-current", String(isSameEntry(entry, active)));
+
+      item.classList.toggle("is-video", (entry.kind || "image") === "video");
 
       const pick = document.createElement("button");
       pick.type = "button";
@@ -396,13 +432,8 @@
         showScreen("appearance");
       });
 
-      const origin = document.createElement("span");
-      origin.className = "lib-origin";
-      origin.innerHTML = ORIGIN_SVG[entry.source] || ORIGIN_SVG.file;
-      origin.title = ORIGIN_LABEL[entry.source] || "";
-
       item.appendChild(pick);
-      item.appendChild(origin);
+      appendEntryBadges(item, entry, "lib");
 
       // Una voce da cartella locale non ha nulla da "eliminare": il file
       // resta sul disco dell'utente. Il cestino qui sparisce del tutto,
@@ -647,20 +678,16 @@
       return;
     }
 
+    // La voce di menu apre da sola un terminale quando serve, quindi qui si
+    // riporta solo lo stato, senza piu' bloccare nulla.
     const ready = !!status.terminalActive;
     const state = el("editorState");
     state.classList.toggle("ready", ready);
     state.textContent = ready
-      ? `Editor connected — terminal open${status.tabLabel ? ` — ${status.tabLabel}` : ""}`
+      ? `Editor connected — terminal open${status.tabLabel ? ` (${status.tabLabel})` : ""}`
       : "Editor connected — no terminal open yet";
 
-  }
 
-  /** Stima leggibile del peso di un data URL (base64: ~3/4 di byte reali). */
-  function describeSize(dataUrl) {
-    const bytes = Math.round((dataUrl.length * 3) / 4);
-    const mb = bytes / (1024 * 1024);
-    return mb >= 1 ? `${mb.toFixed(1)} MB` : `${Math.round(bytes / 1024)} KB`;
   }
 
   // ------------------------------------------------------------------
@@ -861,12 +888,9 @@
   }
 
   /**
-   * Riprende la cartella salvata all'apertura del popup.
-   *
-   * Il permesso puo' essere ancora concesso oppure essere tornato in stato
-   * "prompt": in quel caso il browser esige un gesto dell'utente e non si puo'
-   * chiedere nulla di nascosto all'avvio. Si mostra allora il nome con un
-   * pulsante di riconnessione, invece di far sparire in silenzio la cartella.
+   * Riprende la cartella all'apertura del popup leggendo la cache. Non serve
+   * alcun permesso: le immagini sono gia' state convertite al momento del
+   * collegamento, quindi sono disponibili su qualunque progetto.
    */
   async function restoreFolder() {
     let saved = null;
@@ -875,45 +899,12 @@
     } catch (err) {
       return;
     }
-    if (!saved || !saved.handle) {
+    if (!saved || !Array.isArray(saved.entries) || !saved.entries.length) {
       return;
     }
-    folderName = saved.name || saved.handle.name || "folder";
-
-    let state = "prompt";
-    try {
-      state = await saved.handle.queryPermission({ mode: "read" });
-    } catch (err) {
-      state = "prompt";
-    }
-    if (state === "granted") {
-      folderHandle = saved.handle;
-      await readFolder();
-    } else {
-      // Maniglia nota ma non ancora autorizzata in questa sessione.
-      folderPending = saved.handle;
-    }
-    render();
-  }
-
-  /** Riconnessione esplicita: qui siamo dentro a un click, il permesso si puo' chiedere. */
-  async function reconnectFolder() {
-    if (!folderPending) {
-      return;
-    }
-    let state = "denied";
-    try {
-      state = await folderPending.requestPermission({ mode: "read" });
-    } catch (err) {
-      state = "denied";
-    }
-    if (state !== "granted") {
-      el("folderNote").textContent = "Permission to read that folder wasn't granted.";
-      return;
-    }
-    folderHandle = folderPending;
-    folderPending = null;
-    await readFolder();
+    folderName = saved.name || "folder";
+    folderEntries = saved.entries;
+    folderLinked = true;
     render();
   }
 
@@ -922,135 +913,74 @@
   // ------------------------------------------------------------------
 
   /**
-   * Legge un file scelto dalla cartella e lo applica esattamente come un
-   * caricamento manuale: la provenienza "folder" serve solo alla libreria
-   * (icona, niente cestino), il content script non fa alcuna distinzione.
+   * Legge la cartella e ne salva il contenuto in cache.
+   *
+   * Le immagini vengono convertite subito in data URL (miniatura piu' versione
+   * ottimizzata) e conservate in IndexedDB. E' il motivo per cui la galleria
+   * funziona su tutti i progetti senza mai richiedere di riconnettere nulla:
+   * il permesso sulla cartella serve solo nel momento in cui la si collega o
+   * la si aggiorna, non per guardare le foto gia' lette.
    */
-  /**
-   * Applica un'immagine della cartella. Non la si aggiunge alla libreria: e'
-   * gia' visibile in galleria attraverso folderEntries, e salvarla creerebbe
-   * un doppione permanente che sopravvivrebbe anche allo scollegamento della
-   * cartella.
-   */
-  async function applyFolderImage(fileHandle) {
-    const note = el("folderNote");
-    const file = await fileHandle.getFile();
-    const known = folderEntries.find((e) => e.handle === fileHandle);
-    if (known) {
-      known.usedAt = Date.now();
-    }
-    if (!globalThis.ostAllowedImage(file)) {
-      note.textContent = `"${file.name}" has a format the browser can't show. Use PNG, JPG, WebP or GIF.`;
-      return;
-    }
-    note.textContent = "Processing image…";
-    try {
-      const optimized = await normalizeImage(await readAsDataUrl(file));
-      media.imageData = optimized;
-      saveMedia();
-      updateProfile({
-        imageSource: "folder",
-        imageName: file.name,
-        wallpaperKind: "image",
-        wallpaperEnabled: true,
-      });
-      note.textContent = folderName ? `Folder: ${folderName}` : "";
-    } catch (err) {
-      note.textContent = "That file couldn't be read.";
-    }
-  }
-
-  async function applyFolderVideo(fileHandle) {
-    const note = el("folderNote");
-    const file = await fileHandle.getFile();
-    if (!globalThis.ostAllowedVideo(file)) {
-      note.textContent = `"${file.name}" has a format browsers can't play. Use MP4, WebM or Ogg.`;
-      return;
-    }
-    if (file.size > globalThis.OST_MAX_VIDEO_BYTES) {
-      const limit = Math.round(globalThis.OST_MAX_VIDEO_BYTES / (1024 * 1024));
-      note.textContent = `"${file.name}" is over ${limit} MB. Pick a smaller file instead.`;
-      return;
-    }
-    note.textContent = "Storing video…";
-    try {
-      media.videoData = await readAsDataUrl(file);
-      media.videoName = file.name;
-      saveMedia();
-      updateProfile({ videoSource: "folder", wallpaperKind: "video", wallpaperEnabled: true });
-      note.textContent = folderName ? `Folder: ${folderName}` : "";
-      renderGallery();
-    } catch (err) {
-      note.textContent = "That file couldn't be read.";
-    }
-  }
-
-  /**
-   * Miniatura leggera per la griglia della cartella: si legge il file una
-   * sola volta per creare un object URL, molto piu' economico di farlo
-   * passare per la stessa pipeline di normalizzazione usata per l'applicato
-   * vero e proprio (qui serve solo un'anteprima, non il dato da salvare).
-   */
-  async function folderThumbUrl(fileHandle) {
-    const file = await fileHandle.getFile();
-    return URL.createObjectURL(file);
-  }
-
-  /** Legge il contenuto della cartella collegata e ne ricava le anteprime. */
   async function readFolder() {
     const note = el("folderNote");
     if (!folderHandle) {
       return;
     }
-    // Le anteprime precedenti erano object URL: senza revoca resterebbero in
-    // memoria per tutta la vita del popup.
-    for (const entry of folderEntries) {
-      if (entry.thumbUrl) {
-        URL.revokeObjectURL(entry.thumbUrl);
-      }
-    }
     folderEntries = [];
     note.textContent = "Reading folder…";
 
     try {
-      // FileSystemDirectoryHandle e' un iterabile "map-like": `.entries()` da'
-      // le coppie [nome, handle], mentre `.values()` darebbe i soli handle.
       for await (const [name, handle] of folderHandle.entries()) {
-        if (handle.kind !== "file") {
+        if (handle.kind !== "file" || folderEntries.length >= FOLDER_LIMIT) {
           continue;
         }
         const ext = ("." + name.split(".").pop()).toLowerCase();
-        const isImage = Object.values(globalThis.OST_IMAGE_TYPES).some((exts) => exts.includes(ext));
-        const isVideo = Object.values(globalThis.OST_VIDEO_TYPES).some((exts) => exts.includes(ext));
+        const isImage = Object.values(globalThis.OST_IMAGE_TYPES).some((x) => x.includes(ext));
+        const isVideo = !isImage && Object.values(globalThis.OST_VIDEO_TYPES).some((x) => x.includes(ext));
         if (!isImage && !isVideo) {
           continue;
         }
-        const entry = {
-          name,
-          handle,
-          kind: isImage ? "image" : "video",
-          thumbUrl: "",
-          usedAt: 0,
-        };
-        if (isImage) {
-          try {
-            entry.thumbUrl = await folderThumbUrl(handle);
-          } catch (err) {
-            // Anteprima non disponibile: la voce resta comunque selezionabile.
+        try {
+          const file = await handle.getFile();
+          if (isImage) {
+            const data = await normalizeImage(await readAsDataUrl(file));
+            folderEntries.push({
+              name,
+              kind: "image",
+              data,
+              thumbUrl: await makeThumb(data),
+              usedAt: 0,
+            });
+          } else {
+            if (file.size > globalThis.OST_MAX_VIDEO_BYTES) {
+              continue;
+            }
+            folderEntries.push({
+              name,
+              kind: "video",
+              data: await readAsDataUrl(file),
+              thumbUrl: "",
+              usedAt: 0,
+            });
           }
+        } catch (err) {
+          // Un file illeggibile non deve interrompere la lettura degli altri.
         }
-        folderEntries.push(entry);
       }
     } catch (err) {
       note.textContent = `Couldn't read that folder${err && err.message ? `: ${err.message}` : ""}.`;
       return;
     }
 
+    try {
+      await idbPut(FOLDER_KEY, { name: folderName, entries: folderEntries });
+    } catch (err) {
+      note.textContent = "Folder read, but it couldn't be remembered for next time.";
+      return;
+    }
     const images = folderEntries.filter((e) => e.kind === "image").length;
     const videos = folderEntries.filter((e) => e.kind === "video").length;
-    note.textContent = folderEntries.length
-      ? `${images} image${images === 1 ? "" : "s"}, ${videos} video${videos === 1 ? "" : "s"} — images appear in the gallery.`
-      : "No supported images or videos in this folder.";
+    note.textContent = `${images} image${images === 1 ? "" : "s"}, ${videos} video${videos === 1 ? "" : "s"} from ${folderName}.`;
   }
 
   /**
@@ -1072,18 +1002,11 @@
       // L'utente ha semplicemente annullato la finestra: non e' un errore.
       return;
     }
-    folderHandle = handle;
-    folderPending = null;
-    folderName = handle.name || "folder";
-
     // Una sola cartella alla volta: collegarne un'altra sostituisce la
-    // precedente, sia in memoria sia nel record salvato.
-    try {
-      await idbPut(FOLDER_KEY, { handle: handle, name: folderName });
-    } catch (err) {
-      el("folderNote").textContent =
-        "Folder linked for now, but it couldn't be remembered for next time.";
-    }
+    // precedente, sia in memoria sia nella cache.
+    folderHandle = handle;
+    folderName = handle.name || "folder";
+    folderLinked = true;
 
     await readFolder();
     render();
@@ -1185,8 +1108,8 @@
       e.target.value = "";
     });
     el("pickFolder").addEventListener("click", () => pickFolder());
+    el("syncFolder").addEventListener("click", syncFolder);
     el("unlinkFolder").addEventListener("click", unlinkFolder);
-    el("reconnectFolder").addEventListener("click", reconnectFolder);
 
     el("libBack").addEventListener("click", () => showScreen("appearance"));
 

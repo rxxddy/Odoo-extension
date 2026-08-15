@@ -1,7 +1,7 @@
 {
   "manifest_version": 3,
   "name": "UI Enhancer for Odoo",
-  "version": "1.2.4",
+  "version": "1.2.7",
   "description": "Hide the Odoo.sh trial banner, open in developer mode, and restyle the app drawer with themes and an image or video wallpaper.",
   "permissions": [
     "storage",

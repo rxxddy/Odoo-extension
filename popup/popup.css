@@ -44,6 +44,20 @@ body {
 .mark { width: 26px; height: 26px; border-radius: 8px; flex: none; }
 
 h1 { margin: 0; font-size: 14px; font-weight: 600; letter-spacing: -0.01em; }
+
+.badge-beta {
+  display: inline-block;
+  margin-left: 5px;
+  padding: 1px 6px;
+  border-radius: 4px;
+  background: #d0742c;
+  color: #fff;
+  font-size: 9px;
+  font-weight: 700;
+  letter-spacing: 0.06em;
+  vertical-align: middle;
+  transform: translateY(-1px);
+}
 h2 { margin: 0; flex: 1; font-size: 12.5px; font-weight: 600; letter-spacing: -0.005em; }
 
 .dbchip {
@@ -66,7 +80,7 @@ body.off #screenLibrary,
 body.off #screenDeveloper,
 body.off #screenEditor { opacity: 0.4; pointer-events: none; }
 
-/* --- Banner di riconoscimento dominio ---
+/* --- Riconoscimento dominio (ora una card dentro Appearance) ---
    La regola [hidden] e' obbligatoria: `display: flex` di una classe vince sul
    `[hidden] { display: none }` del browser, ed e' il motivo per cui il banner
    restava visibile ovunque. */
@@ -74,9 +88,8 @@ body.off #screenEditor { opacity: 0.4; pointer-events: none; }
   display: flex;
   align-items: center;
   gap: 10px;
-  padding: 10px 16px;
-  background: color-mix(in srgb, var(--brand) 12%, var(--surface));
-  border-bottom: 1px solid var(--line);
+  background: color-mix(in srgb, var(--brand) 12%, var(--card));
+  border-color: color-mix(in srgb, var(--brand) 35%, var(--line));
 }
 
 .recognize[hidden] { display: none; }
@@ -445,6 +458,20 @@ input[type="range"]::-webkit-slider-thumb {
 
 .gal-origin svg { width: 10px; height: 10px; fill: none; stroke: currentColor; stroke-width: 1.6; stroke-linecap: round; stroke-linejoin: round; }
 
+/* Sfondo scuro fisso per i video di cartella: non hanno una miniatura reale,
+   quindi senza questo sembrerebbero un'immagine rotta invece di uno slot video. */
+.gal-item.is-video,
+.lib-item.is-video {
+  background-image: none !important;
+  background: linear-gradient(150deg, #2b3350, #0b0d12);
+}
+
+/* Seconda icona, riservata al tipo "video": si affianca a quella di
+   provenienza nell'angolo opposto, mai a scapito del cestino (che sui video
+   di cartella non compare comunque). */
+.gal-kind { left: auto; right: 4px; }
+.lib-kind { left: auto; right: 5px; }
+
 /* --- Libreria --- */
 .libhead {
   display: flex;
@@ -628,6 +655,20 @@ input[type="range"]::-webkit-slider-thumb {
   background: var(--surface);
   border-top: 1px solid var(--line);
 }
+
+.foot-help {
+  display: flex;
+  align-items: center;
+  gap: 6px;
+  color: var(--ink-soft);
+  font-size: 11.5px;
+  text-decoration: none;
+}
+
+.foot-help:hover { color: var(--brand); }
+.foot-help svg { width: 14px; height: 14px; flex: none; fill: none; stroke: currentColor; stroke-width: 1.3; stroke-linecap: round; stroke-linejoin: round; }
+
+.foot-right { display: flex; align-items: center; gap: 10px; }
 
 .saved { color: var(--accent); font-size: 11.5px; opacity: 0; transition: opacity 0.2s ease; }
 .saved.on { opacity: 1; }
