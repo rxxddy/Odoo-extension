@@ -48,21 +48,27 @@
   }
 
   function activeImage() {
-    if (profile.imageSource === "file") {
+    // "folder" e "file" arrivano entrambi gia' incorporati in media.imageData:
+    // per il livello CSS non c'e' differenza, la provenienza serve solo al
+    // popup per scegliere l'icona da mostrare nella libreria.
+    if (profile.imageSource === "file" || profile.imageSource === "folder") {
       return media.imageData;
     }
     return profile.imageUrl;
   }
 
   function activeVideo() {
-    if (profile.videoSource === "file") {
+    if (profile.videoSource === "file" || profile.videoSource === "folder") {
       return media.videoData;
     }
     return profile.videoUrl;
   }
 
   function wallpaperMode() {
-    if (!profile.wallpaperEnabled) {
+    // L'interruttore generale ha la precedenza su tutto: senza questo
+    // controllo il livello video e la classe sul body restavano in pagina
+    // anche a estensione spenta.
+    if (!settings.enabled || !profile.wallpaperEnabled) {
       return "none";
     }
     if (profile.wallpaperKind === "video") {
@@ -164,19 +170,28 @@
       chunks.push(globalThis.ostBadgeCss(settings, currentEnv));
     }
 
-    chunks.push(globalThis.ostThemeCss(profile.theme));
+    // Sfondo, bordo, effetto e misura del disegno nascono da un'unica
+    // funzione: finiscono tutti nelle stesse proprieta' CSS, quindi generarli
+    // separatamente li farebbe sovrascrivere a vicenda.
+    chunks.push(globalThis.ostIconCss(profile));
     chunks.push(globalThis.ostLabelCss(profile.labelColor));
 
     if (profile.hideAppNames) {
       chunks.push(globalThis.ostNoLabelsCss());
     }
-    // Dopo il tema, cosi' la misura scelta prevale sul padding della cornice.
-    // Il tema serve anche a riproporre i suoi livelli di sfondo, che altrimenti
-    // il disegno spostato sullo sfondo coprirebbe.
-    chunks.push(globalThis.ostIconSizeCss(profile.iconSize, profile.theme));
 
     if (settings.copyFieldNames) {
       chunks.push(globalThis.ostToastCss());
+    }
+
+    if (settings.shellUi) {
+      chunks.push(`
+        #${MENU_ITEM_ID} .lm-MenuBar-itemLabel {
+          font-family: ui-monospace, SFMono-Regular, Menlo, monospace;
+          color: #c9761e;
+        }
+        #${MENU_ITEM_ID}:hover { background: rgba(255, 255, 255, 0.08); }
+      `);
     }
 
     if (profile.roundIconsEnabled) {
@@ -498,6 +513,8 @@
         hideNeutralizeBanner();
         applyBadge();
         applyIconArtwork();
+        applyEditorMenu();
+        scanForContextMenus();
         if (wallpaperMode() === "video") {
           ensureVideoLayer();
         }
@@ -644,6 +661,25 @@
   }
 
   chrome.runtime.onMessage.addListener((message, sender, sendResponse) => {
+    if (message && message.type === "ost:editor-status") {
+      sendResponse({
+        found: editorPresent(),
+        terminalActive: !!visibleTerminal(),
+        tabLabel: activeTabLabel(),
+      });
+      return false;
+    }
+
+    if (message && message.type === "ost:editor-run") {
+      if (!settings.enabled) {
+        sendResponse({ ok: false, error: "extension is off" });
+        return false;
+      }
+      runInTerminal(message.command, message.newTerminal).then(sendResponse);
+      // Risposta asincrona: il canale va tenuto aperto.
+      return true;
+    }
+
     if (message && message.type === "ost:database") {
       sendResponse({
         database: readDatabaseName(),
@@ -805,14 +841,415 @@
   }
 
   // ------------------------------------------------------------------
+  // 5c. Editor di Odoo.sh
+  // ------------------------------------------------------------------
+
+  const BRIDGE_ID = "ost-editor-bridge";
+  const CHANNEL_IN = "ost-editor-request";
+  const CHANNEL_OUT = "ost-editor-response";
+  const BRIDGE_TIMEOUT = 2000;
+
+  let bridgeSeq = 0;
+  const bridgeWaiting = new Map();
+
+  /**
+   * L'editor si riconosce dal guscio di JupyterLab, non dall'indirizzo: il
+   * percorso cambia da progetto a progetto, mentre questi contenitori sono
+   * sempre gli stessi.
+   */
+  function editorPresent() {
+    // Il markup di JupyterLab e' il segnale primario; il percorso serve da
+    // ripiego nella finestra in cui la pagina ha gia' l'indirizzo giusto ma
+    // l'applicazione non ha ancora finito di montare i suoi contenitori.
+    if (document.querySelector("#jp-main-dock-panel, .jp-LabShell, #jupyterlab-splash, [data-jp-theme-name]")) {
+      return true;
+    }
+    return /\/odoo-sh\/editor(\/|$)/i.test(window.location.pathname);
+  }
+
+  /**
+   * Terminale in primo piano. Si guarda al widget visibile invece che
+   * all'etichetta della scheda: il titolo si puo' rinominare, il layout no.
+   */
+  function visibleTerminal() {
+    for (const node of document.querySelectorAll(".jp-Terminal")) {
+      if (node.offsetParent !== null) {
+        return node;
+      }
+    }
+    return null;
+  }
+
+  /** Etichetta della scheda attiva nell'area principale, a scopo informativo. */
+  function activeTabLabel() {
+    const tab = document.querySelector(
+      '.lm-TabBar-tab.lm-mod-current[aria-selected="true"] .lm-TabBar-tabLabel'
+    );
+    return tab ? tab.textContent.trim() : "";
+  }
+
+  const MENU_ITEM_ID = "ost-shell-item";
+
+  /**
+   * Aggiunge "odoo-bin shell" in fondo alla barra dei menu di JupyterLab,
+   * subito dopo Help. La voce viene rimessa dall'osservatore quando Lumino
+   * ridisegna la barra, perche' quel nodo non e' gestito da noi.
+   */
+  function applyEditorMenu() {
+    const wanted = settings.enabled && settings.shellUi && editorPresent();
+    const existing = document.getElementById(MENU_ITEM_ID);
+
+    if (!wanted) {
+      if (existing) {
+        existing.remove();
+      }
+      return;
+    }
+    if (existing) {
+      return;
+    }
+    const bar = document.querySelector("#jp-MainMenu .lm-MenuBar-content");
+    if (!bar) {
+      return;
+    }
+    const item = document.createElement("li");
+    item.id = MENU_ITEM_ID;
+    item.className = "lm-MenuBar-item";
+    item.setAttribute("role", "menuitem");
+    item.title = "Open a terminal and run odoo-bin shell";
+
+    const label = document.createElement("div");
+    label.className = "lm-MenuBar-itemLabel";
+    label.textContent = "odoo-bin shell";
+    item.appendChild(label);
+
+    // In cattura e con la propagazione fermata: la barra dei menu di Lumino
+    // gestisce i propri click e aprirebbe un menu vuoto al posto nostro.
+    item.addEventListener(
+      "click",
+      (event) => {
+        event.preventDefault();
+        event.stopPropagation();
+        runInTerminal("odoo-bin shell", true);
+      },
+      true
+    );
+    bar.appendChild(item);
+  }
+
+  function injectBridge() {
+    if (document.getElementById(BRIDGE_ID)) {
+      return;
+    }
+    const script = document.createElement("script");
+    script.id = BRIDGE_ID;
+    script.src = chrome.runtime.getURL("page/editor-bridge.js");
+    // Il nodo NON va rimosso dopo il caricamento: e' l'unico segno che il
+    // ponte c'e' gia'. Togliendolo, il controllo qui sopra non trovava piu'
+    // nulla e il file veniva riscaricato ad ogni chiamata.
+    (document.head || document.documentElement).appendChild(script);
+  }
+
+  window.addEventListener("message", (event) => {
+    if (event.source !== window) {
+      return;
+    }
+    const data = event.data;
+    if (!data || data.channel !== CHANNEL_OUT) {
+      return;
+    }
+    const pending = bridgeWaiting.get(data.id);
+    if (pending) {
+      bridgeWaiting.delete(data.id);
+      clearTimeout(pending.timer);
+      pending.resolve(data);
+    }
+  });
+
+  /**
+   * Inoltra un comando al ponte e attende l'esito. Il timeout evita che il
+   * popup resti in attesa se lo script della pagina non risponde.
+   */
+  function runInTerminal(command, newTerminal) {
+    return new Promise((resolve) => {
+      injectBridge();
+      const id = "cmd" + ++bridgeSeq;
+      const timer = setTimeout(() => {
+        bridgeWaiting.delete(id);
+        resolve({ ok: false, error: "editor did not answer" });
+      }, BRIDGE_TIMEOUT);
+
+      bridgeWaiting.set(id, { resolve, timer });
+      window.postMessage(
+        { channel: CHANNEL_IN, id: id, command: command, newTerminal: !!newTerminal },
+        window.location.origin
+      );
+    });
+  }
+
+
+  // ------------------------------------------------------------------
+  // 5d. Copia/incolla nel terminale e comandi rapidi sui moduli
+  // ------------------------------------------------------------------
+
+  // Nome e tipo (file/cartella) dell'ultima voce su cui e' stato aperto il
+  // menu contestuale: il menu stesso non porta questa informazione, va
+  // catturata mentre si apre, sull'evento "contextmenu" originale.
+  let lastContextEntry = null;
+
+  document.addEventListener(
+    "contextmenu",
+    (event) => {
+      const row = event.target.closest && event.target.closest(".jp-DirListing-item");
+      lastContextEntry = row
+        ? {
+            name: (row.querySelector(".jp-DirListing-itemText span") || {}).textContent?.trim() || "",
+            isDir: row.getAttribute("data-isdir") === "true",
+          }
+        : null;
+      // Il menu del terminale resta quello nativo di Jupyter, pulsanti
+      // disattivati compresi: e' quello che Odoo.sh mostra di suo, e
+      // Maiusc+tasto destro apre gia' da solo (comportamento del browser,
+      // non nostro) il menu nativo con Copy/Paste funzionanti quando c'e' una
+      // selezione. Il problema di Ctrl+C si affronta altrove, vedi il
+      // gestore "keydown" qui sotto.
+    },
+    true
+  );
+
+  /**
+   * Copia reale con Ctrl+C dentro al terminale dell'editor, senza mandare
+   * anche il segnale di interruzione.
+   *
+   * Per xterm.js, Ctrl+C e' sempre "manda SIGINT": il tasto viene intercettato
+   * dal suo stesso gestore, che chiama preventDefault prima che il browser
+   * possa fare la sua copia nativa — ed e' il motivo per cui compariva "^C"
+   * anche con del testo selezionato. Qui si intercetta l'evento un livello
+   * piu' sopra (un content script a document_start si aggancia ben prima che
+   * Jupyter monti i propri gestori: stesso nodo, stessa fase, vince chi si e'
+   * registrato prima) e si decide se e' il caso di copiare al posto di
+   * interrompere.
+   *
+   * Entrambe le condizioni devono valere: si e' nell'editor di Odoo.sh E il
+   * fuoco e' dentro a un terminale. Fuori da li' Ctrl+C deve continuare a
+   * fare cio' che ha sempre fatto (copiare in un editor di testo, un
+   * accorciatoia altrove, eccetera).
+   */
+  document.addEventListener(
+    "keydown",
+    (event) => {
+      if (!settings.enabled || !settings.shellUi) {
+        return;
+      }
+      if (event.key !== "c" && event.key !== "C") {
+        return;
+      }
+      if (!event.ctrlKey || event.shiftKey || event.altKey || event.metaKey) {
+        return;
+      }
+      if (!editorPresent()) {
+        return;
+      }
+      const inTerminal = event.target.closest && event.target.closest(".jp-Terminal, .xterm");
+      if (!inTerminal) {
+        return;
+      }
+      const selection = window.getSelection();
+      // Senza nulla di selezionato Ctrl+C deve restare cio' che e' sempre
+      // stato in un terminale: l'interruzione del comando in corso.
+      if (!selection || selection.isCollapsed || !selection.toString()) {
+        return;
+      }
+      event.preventDefault();
+      event.stopPropagation();
+      event.stopImmediatePropagation();
+      try {
+        document.execCommand("copy");
+      } catch (err) {
+        // Nessun modo alternativo affidabile da qui: si rinuncia in silenzio
+        // piuttosto che lasciare comunque partire il segnale di interruzione.
+      }
+    },
+    true
+  );
+
+  /** Un pulsante di comando rapido, con lo stesso aspetto delle voci di Lumino. */
+  function buildQuickCommandItem(label, command) {
+    const li = document.createElement("li");
+    li.className = "lm-Menu-item";
+    li.setAttribute("role", "menuitem");
+    li.tabIndex = 0;
+    li.style.pointerEvents = "auto";
+    li.style.cursor = "pointer";
+    li.dataset.ostQuickCommand = "1";
+    li.innerHTML =
+      '<div class="lm-Menu-itemIcon"></div>' +
+      `<div class="lm-Menu-itemLabel">${label}</div>` +
+      '<div class="lm-Menu-itemShortcut"></div>' +
+      '<div class="lm-Menu-itemSubmenuIcon"></div>';
+
+    // Colore al passaggio del mouse gestito a mano: la classe con cui Lumino
+    // evidenzia le proprie voci dipende da un elenco interno che non ci
+    // riguarda, quindi senza questo la voce resterebbe visivamente morta.
+    li.addEventListener("mouseenter", () => {
+      li.style.background = "rgba(255, 255, 255, 0.08)";
+    });
+    li.addEventListener("mouseleave", () => {
+      li.style.background = "";
+    });
+
+    const run = (event) => {
+      event.preventDefault();
+      event.stopPropagation();
+      event.stopImmediatePropagation();
+      runInTerminal(command, true);
+      document.dispatchEvent(
+        new KeyboardEvent("keydown", { key: "Escape", code: "Escape", bubbles: true })
+      );
+    };
+    li.addEventListener("pointerdown", run, true);
+    li.addEventListener("mousedown", run, true);
+    li.addEventListener("click", run, true);
+    return li;
+  }
+
+  /**
+   * Aggiunge "Zip folder" e "Update module" in fondo al menu del file
+   * browser, solo quando la voce cliccata col destro e' una cartella.
+   *
+   * La cartella su cui agire si ricava ogni volta da `lastContextEntry`
+   * corrente, mai fissata alla prima apertura: Lumino tiene sotto certe
+   * condizioni un solo elemento di menu vivo e lo riposiziona invece di
+   * ricrearlo da zero ad ogni click destro, quindi affidarsi a un flag "gia'
+   * fatto una volta per sempre" lasciava le voci vecchie, con la cartella
+   * sbagliata incorporata nel comando, ogni volta che si cambiava bersaglio —
+   * ed e' esattamente il comportamento segnalato.
+   */
+  function addQuickCommands(menu) {
+    const list = menu.querySelector(".lm-Menu-content");
+    if (!list) {
+      return;
+    }
+    const wantedName = lastContextEntry && lastContextEntry.isDir ? lastContextEntry.name : "";
+
+    // Il confronto e' con la cartella per cui il menu e' stato aggiornato
+    // l'ultima volta, non con un semplice "fatto/non fatto": cosi' si
+    // ricostruisce solo quando il bersaglio e' davvero cambiato, invece che
+    // ad ogni mutazione del DOM mentre il menu resta semplicemente aperto.
+    if (list.dataset.ostQuickFor === wantedName) {
+      return;
+    }
+    for (const old of list.querySelectorAll('[data-ost-quick-command="1"]')) {
+      old.remove();
+    }
+    list.dataset.ostQuickFor = wantedName;
+    if (!wantedName) {
+      return;
+    }
+    list.appendChild(buildQuickCommandItem("Zip folder", `zip -r ${wantedName}.zip ${wantedName}`));
+    list.appendChild(buildQuickCommandItem("Update module", `odoo-bin -u ${wantedName} --st`));
+  }
+
+  /**
+   * Un menu di Lumino e' anonimo finche' non se ne guarda il contenuto: lo si
+   * riconosce dai comandi che contiene, non dalla classe (che e' la stessa
+   * per ogni menu contestuale dell'applicazione). Il solo menu che qui
+   * interessa e' quello del file browser: quello del terminale non arriva
+   * nemmeno ad aprirsi, vedi il gestore "contextmenu" qui sopra.
+   */
+  function augmentEditorMenu(node) {
+    if (node.querySelector('[data-command^="filebrowser:"]')) {
+      addQuickCommands(node);
+    }
+  }
+
+  /**
+   * Scandaglia l'intero documento invece di fidarsi di quale nodo esatto sia
+   * comparso in una mutazione: Lumino a volte monta il menu dentro a un
+   * contenitore intermedio creato nello stesso istante, quindi il nodo
+   * aggiunto di primo livello non e' detto porti la classe "lm-Menu" lui
+   * stesso. Questi menu sono rarissimi (`.lm-Menu` e' quasi sempre assente),
+   * quindi il costo di cercarli ovunque e' trascurabile.
+   */
+  function scanForContextMenus() {
+    if (!settings.enabled || !settings.shellUi) {
+      return;
+    }
+    for (const menu of document.querySelectorAll(".lm-Menu")) {
+      augmentEditorMenu(menu);
+    }
+  }
+
+  // ------------------------------------------------------------------
+  // ------------------------------------------------------------------
   // Orchestrazione
   // ------------------------------------------------------------------
+
+  /**
+   * Rimuove ogni traccia dell'estensione dalla pagina. Serve allo spegnimento
+   * dell'interruttore generale: alcune cose (foglio di stile, livello video,
+   * targhetta) sono nostre e le togliamo noi, ma cio' che Odoo aveva calcolato
+   * a partire dai nostri stili non torna indietro da solo. Per questo si
+   * ricarica subito la pagina, cosi' il sito ripristina i propri fogli di
+   * stile senza che l'utente debba farlo a mano.
+   */
+  function teardownEverything() {
+    let hadSomething = false;
+
+    const style = document.getElementById(STYLE_ID);
+    if (style) {
+      style.remove();
+      hadSomething = true;
+    }
+    if (document.getElementById(LAYER_ID)) {
+      removeVideoLayer();
+      hadSomething = true;
+    }
+    const badge = document.getElementById("ost-env-badge");
+    if (badge) {
+      badge.remove();
+      hadSomething = true;
+    }
+    const toast = document.getElementById("ost-copy-toast");
+    if (toast) {
+      toast.remove();
+    }
+    if (document.body) {
+      document.body.classList.remove(VIDEO_ON_CLASS);
+      for (const icon of document.querySelectorAll(".o_app_icon.ost-art")) {
+        icon.classList.remove("ost-art");
+        icon.style.removeProperty("--ost-art");
+        delete icon.dataset.ostArt;
+        hadSomething = true;
+      }
+    }
+    currentEnv = "";
+    restoreHiddenBanners();
+    stopObservers();
+
+    return hadSomething;
+  }
+
+  function stopObservers() {
+    if (domObserver) {
+      domObserver.disconnect();
+      domObserver = null;
+    }
+    if (bodyClassObserver) {
+      bodyClassObserver.disconnect();
+      bodyClassObserver = null;
+    }
+  }
 
   function applyAll() {
     applyBadge();
     applyCss();
     applyIconArtwork();
     applyMediaLayer();
+    if (settings.enabled && settings.shellUi && editorPresent()) {
+      injectBridge();
+    }
+    applyEditorMenu();
     if (settings.enabled && (settings.hideTrialBanner || settings.hideNeutralizeBanner)) {
       hideTrialBanners();
       hideNeutralizeBanner();
@@ -898,6 +1335,7 @@
       return;
     }
     const before = settings.debugMode;
+    const wasEnabled = settings.enabled;
     const beforeMedia = activeVideo();
 
     chrome.storage.local.get(
@@ -911,6 +1349,17 @@
       ],
       (record) => {
         readState(record || {});
+
+        // Spegnimento generale: si smonta tutto e si ricarica, cosi' la
+        // pagina torna esattamente com'era senza residui dei nostri stili.
+        if (wasEnabled && !settings.enabled) {
+          const hadSomething = teardownEverything();
+          if (hadSomething) {
+            window.location.reload();
+          }
+          return;
+        }
+
         if (beforeMedia !== activeVideo()) {
           // La sorgente e' cambiata: il livello va ricostruito da zero.
           removeVideoLayer();

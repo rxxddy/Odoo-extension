@@ -6,102 +6,222 @@
   --line: #e3e4ea;
   --surface: #ffffff;
   --surface-sunk: #f6f6f8;
+  --card: #ffffff;
   --brand: #714b67;
   --accent: #017e84;
   --radius: 10px;
+  --shadow: 0 1px 2px rgba(16, 18, 28, 0.06), 0 4px 12px rgba(16, 18, 28, 0.05);
 }
 
 @media (prefers-color-scheme: dark) {
   :root {
     --ink: #eceef4;
     --ink-soft: #9aa0b0;
-    --line: #34384a;
-    --surface: #1b1e29;
-    --surface-sunk: #232736;
+    --line: #33374a;
+    --surface: #15171f;
+    --surface-sunk: #1e2130;
+    --card: #1c1f2b;
     --brand: #a67e9a;
     --accent: #4fb3b8;
+    --shadow: 0 1px 2px rgba(0, 0, 0, 0.4), 0 4px 12px rgba(0, 0, 0, 0.28);
   }
 }
 
 * { box-sizing: border-box; }
 
 body {
-  width: 340px;
+  width: 480px;
   margin: 0;
   font: 13px/1.45 -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, sans-serif;
   color: var(--ink);
-  background: var(--surface);
+  background: var(--surface-sunk);
 }
 
 /* --- Testata --- */
-.head { padding: 14px 16px 12px; border-bottom: 1px solid var(--line); }
-.head-row { display: flex; align-items: center; gap: 9px; }
+.head { padding: 13px 16px; background: var(--surface); border-bottom: 1px solid var(--line); }
+.head-row { display: flex; align-items: center; gap: 10px; }
+.head-text { flex: 1; min-width: 0; }
+.mark { width: 26px; height: 26px; border-radius: 8px; flex: none; }
 
-/* Il quadratino richiama l'icona app di Odoo, stessa curvatura del drawer. */
-.mark { width: 18px; height: 18px; border-radius: 6px; background: var(--brand); flex: none; }
+h1 { margin: 0; font-size: 14px; font-weight: 600; letter-spacing: -0.01em; }
+h2 { margin: 0; flex: 1; font-size: 12.5px; font-weight: 600; letter-spacing: -0.005em; }
 
-h1 { margin: 0; flex: 1; font-size: 14px; font-weight: 600; letter-spacing: -0.01em; }
-
-/* Estensione spenta: i controlli restano leggibili ma chiaramente inattivi. */
-body.off main, body.off #screenLibrary { opacity: 0.42; pointer-events: none; }
-
-.chiprow { display: flex; align-items: center; gap: 6px; margin-top: 8px; }
-
-/* Riprende il chip monospazio con cui Odoo mostra il database sotto l'utente. */
 .dbchip {
   display: flex;
   align-items: center;
-  gap: 6px;
-  flex: 1;
-  min-width: 0;
-  margin: 0;
-  padding: 5px 8px;
-  border-radius: 5px;
-  background: var(--surface-sunk);
+  gap: 5px;
+  margin: 2px 0 0;
   color: var(--ink-soft);
   font-family: ui-monospace, SFMono-Regular, "SF Mono", Menlo, monospace;
-  font-size: 11px;
+  font-size: 10.5px;
   overflow: hidden;
 }
 
-.dbchip svg { width: 11px; height: 11px; flex: none; fill: none; stroke: currentColor; stroke-width: 1.3; }
+.dbchip svg { width: 10px; height: 10px; flex: none; fill: none; stroke: currentColor; stroke-width: 1.3; }
 .dbchip span { overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
 
-.iconbtn {
+/* Estensione spenta: i controlli restano leggibili ma chiaramente inattivi. */
+body.off main,
+body.off #screenLibrary,
+body.off #screenDeveloper,
+body.off #screenEditor { opacity: 0.4; pointer-events: none; }
+
+/* --- Banner di riconoscimento dominio ---
+   La regola [hidden] e' obbligatoria: `display: flex` di una classe vince sul
+   `[hidden] { display: none }` del browser, ed e' il motivo per cui il banner
+   restava visibile ovunque. */
+.recognize {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  padding: 10px 16px;
+  background: color-mix(in srgb, var(--brand) 12%, var(--surface));
+  border-bottom: 1px solid var(--line);
+}
+
+.recognize[hidden] { display: none; }
+.recognize .hint { flex: 1; margin: 0; }
+
+/* --- Schede principali --- */
+.tabs {
+  display: flex;
+  gap: 2px;
+  padding: 0 16px;
+  background: var(--surface);
+  border-bottom: 1px solid var(--line);
+}
+
+.tab {
+  padding: 10px 13px;
+  border: 0;
+  border-bottom: 2px solid transparent;
+  background: none;
+  color: var(--ink-soft);
+  font: inherit;
+  font-size: 12.5px;
+  cursor: pointer;
+  margin-bottom: -1px;
+}
+
+.tab:hover { color: var(--ink); }
+.tab[aria-selected="true"] { color: var(--ink); font-weight: 600; border-bottom-color: var(--brand); }
+
+/* --- Contenitori a scheda --- */
+main, #screenDeveloper { display: grid; gap: 12px; padding: 12px 14px; }
+
+/* Obbligatorio: una regola di classe o di elemento con `display` vince sul
+   `[hidden] { display: none }` del browser. Senza questa riga la sezione
+   Appearance non si nascondeva mai, e la libreria compariva in coda alla
+   pagina invece che come vista a se'. */
+main[hidden],
+#screenDeveloper[hidden],
+#screenLibrary[hidden],
+#screenEditor[hidden] { display: none !important; }
+
+.card {
+  padding: 13px 14px;
+  border: 1px solid var(--line);
+  border-radius: 14px;
+  background: var(--card);
+  box-shadow: var(--shadow);
+}
+
+.card-head { display: flex; align-items: center; gap: 10px; margin-bottom: 11px; }
+
+.scope {
+  margin: 0;
+  padding: 3px 7px;
+  border-radius: 5px;
+  background: var(--surface-sunk);
+  color: var(--ink-soft);
+  font-family: ui-monospace, SFMono-Regular, Menlo, monospace;
+  font-size: 10px;
+  max-width: 55%;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+.hint { margin: 2px 0 0; color: var(--ink-soft); font-size: 11.5px; }
+code { font-family: ui-monospace, SFMono-Regular, Menlo, monospace; font-size: 11px; }
+
+/* --- Righe di controllo --- */
+.ctrlrow {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  padding: 9px 0;
+  border-top: 1px solid var(--line);
+}
+
+.ctrl-text { flex: 1; min-width: 0; }
+.ctrl-label { display: block; font-weight: 500; }
+.ctrlrow > .ctrl-label { flex: none; width: 96px; }
+
+/* --- Costruttore icone --- */
+.builder { display: flex; gap: 14px; align-items: flex-start; }
+
+.builder-preview {
   flex: none;
-  width: 28px;
-  height: 28px;
+  width: 96px;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 7px;
+  padding: 12px 0;
+  border-radius: 12px;
+  /* Sfondo neutro a scacchiera: mostra la trasparenza reale dell'icona senza
+     suggerire un colore che nel drawer non ci sarebbe. */
+  background:
+    linear-gradient(135deg, #3a4a63 0%, #6b4f63 55%, #23303f 100%);
+}
+
+.iconpreview {
+  width: 46px;
+  height: 46px;
+  box-sizing: border-box;
   display: flex;
   align-items: center;
   justify-content: center;
-  padding: 0;
+}
+
+.iconpreview-art {
+  display: block;
+  width: 100%;
+  height: 100%;
+  border-radius: inherit;
+  background: linear-gradient(140deg, #f2a03d, #d9553f 55%, #8e3d7a);
+}
+
+.iconpreview-caption { color: #fff; font-size: 10.5px; text-shadow: 0 1px 3px rgba(0, 0, 0, 0.6); }
+
+/* Il margine inferiore stacca l'ultimo menu (Effect) dalla riga di controlli
+   che segue: senza, il bordo superiore della riga toccava il campo. */
+.builder-controls { flex: 1; display: grid; gap: 8px; min-width: 0; margin-bottom: 4px; }
+
+.field { display: grid; gap: 3px; }
+.field-label { color: var(--ink-soft); font-size: 11px; }
+
+.select {
+  width: 100%;
+  padding: 6px 8px;
   border: 1px solid var(--line);
-  border-radius: var(--radius);
+  border-radius: 8px;
   background: var(--surface-sunk);
-  color: var(--ink-soft);
+  color: var(--ink);
+  font: inherit;
+  font-size: 12px;
   cursor: pointer;
 }
 
-.iconbtn:hover { border-color: var(--brand); color: var(--ink); }
-.iconbtn svg { width: 14px; height: 14px; fill: none; stroke: currentColor; stroke-width: 1.4; stroke-linecap: round; stroke-linejoin: round; }
-.iconbtn.done { color: var(--accent); border-color: var(--accent); }
-
-/* --- Blocchi --- */
-.block { padding: 13px 16px; border-bottom: 1px solid var(--line); }
-.row { display: flex; align-items: flex-start; gap: 12px; }
-.row-sub { margin-top: 13px; padding-top: 13px; border-top: 1px solid var(--line); }
-.row-text { flex: 1; min-width: 0; }
-
-label { display: block; font-weight: 500; cursor: pointer; }
-.hint { margin: 2px 0 0; color: var(--ink-soft); font-size: 11.5px; }
-code { font-family: ui-monospace, SFMono-Regular, Menlo, monospace; font-size: 11px; }
+.select:hover { border-color: var(--brand); }
 
 /* --- Interruttore --- */
 .switch {
   appearance: none;
-  margin: 2px 0 0;
-  width: 36px;
-  height: 20px;
+  margin: 0;
+  width: 34px;
+  height: 19px;
   flex: none;
   border-radius: 999px;
   background: var(--line);
@@ -115,162 +235,291 @@ code { font-family: ui-monospace, SFMono-Regular, Menlo, monospace; font-size: 1
   position: absolute;
   top: 2px;
   left: 2px;
-  width: 16px;
-  height: 16px;
+  width: 15px;
+  height: 15px;
   border-radius: 50%;
   background: #fff;
   transition: transform 0.15s ease;
 }
 
 .switch:checked { background: var(--brand); }
-.switch:checked::after { transform: translateX(16px); }
+.switch:checked::after { transform: translateX(15px); }
 
-/* --- Temi ---
-   Ogni anteprima e' l'icona su una foto: e' esattamente cio' che il tema
-   modifica nel drawer, quindi la scelta si giudica a colpo d'occhio. */
-.themes { display: grid; grid-template-columns: repeat(5, 1fr); gap: 6px; margin-top: 12px; }
+/* --- Segmenti --- */
+.seg { display: flex; gap: 3px; padding: 3px; border-radius: 9px; background: var(--surface-sunk); }
 
-.theme {
-  padding: 0 0 5px;
-  border: 1px solid var(--line);
-  border-radius: var(--radius);
-  background: var(--surface-sunk);
+.seg-btn {
+  flex: 1;
+  padding: 5px 0;
+  border: 0;
+  border-radius: 6px;
+  background: transparent;
   color: var(--ink-soft);
   font: inherit;
-  font-size: 9.5px;
-  line-height: 1.25;
+  font-size: 11.5px;
   cursor: pointer;
-  overflow: hidden;
-  transition: border-color 0.12s ease;
 }
 
-.theme:hover { border-color: var(--brand); }
-
-.theme[aria-checked="true"] {
-  border-color: var(--brand);
-  box-shadow: 0 0 0 1px var(--brand);
+.seg-btn[aria-selected="true"] {
+  background: var(--card);
   color: var(--ink);
   font-weight: 500;
+  box-shadow: 0 1px 2px rgba(0, 0, 0, 0.14);
 }
 
-.tname { display: block; padding: 0 2px; }
+.seg-icons { flex: none; }
+.seg-icons .seg-btn { display: flex; align-items: center; justify-content: center; width: 34px; padding: 5px 0; }
+.seg-icons svg { width: 15px; height: 15px; fill: none; stroke: currentColor; stroke-width: 1.4; stroke-linecap: round; stroke-linejoin: round; }
+.seg-icons .seg-btn[aria-selected="true"] svg { stroke: var(--brand); }
 
-.tp {
+/* --- Cursori --- */
+.rangewrap { flex: 1; display: flex; align-items: center; gap: 9px; }
+.rangewrap output { font-family: ui-monospace, SFMono-Regular, Menlo, monospace; font-size: 11px; color: var(--ink-soft); min-width: 30px; text-align: right; }
+
+.slider label {
+  display: flex;
+  justify-content: space-between;
+  color: var(--ink-soft);
+  font-size: 11.5px;
+  margin-bottom: 5px;
+}
+
+.slider output { font-family: ui-monospace, SFMono-Regular, Menlo, monospace; color: var(--ink); }
+
+input[type="range"] { appearance: none; width: 100%; height: 3px; border-radius: 3px; background: var(--line); }
+input[type="range"]::-webkit-slider-thumb {
+  appearance: none;
+  width: 14px;
+  height: 14px;
+  border-radius: 50%;
+  background: var(--brand);
+  cursor: pointer;
+}
+
+/* --- Pulsanti e campi --- */
+.text {
+  flex: 1;
+  min-width: 0;
+  padding: 7px 9px;
+  border: 1px solid var(--line);
+  border-radius: 9px;
+  background: var(--surface-sunk);
+  color: var(--ink);
+  font-family: ui-monospace, SFMono-Regular, Menlo, monospace;
+  font-size: 11.5px;
+}
+
+.btn {
+  padding: 7px 12px;
+  border: 1px solid var(--line);
+  border-radius: 9px;
+  background: var(--surface-sunk);
+  color: var(--ink);
+  font: inherit;
+  font-size: 12px;
+  cursor: pointer;
+  white-space: nowrap;
+}
+
+.btn:hover { border-color: var(--brand); }
+.btn-wide { flex: 1; }
+.btn-quiet { color: var(--ink-soft); }
+.btn-accent { border-color: var(--brand); color: var(--ink); }
+
+.iconbtn {
+  flex: none;
+  width: 28px;
+  height: 28px;
   display: flex;
   align-items: center;
   justify-content: center;
-  height: 44px;
-  margin: 0 0 4px;
-  background: linear-gradient(135deg, #3a4a63 0%, #6b4f63 55%, #23303f 100%);
+  padding: 0;
+  border: 1px solid var(--line);
+  border-radius: 9px;
+  background: var(--surface-sunk);
+  color: var(--ink-soft);
+  cursor: pointer;
 }
 
-/* L'anteprima ha due livelli come nel drawer: `i` e' la cornice del tema,
-   lo `span` interno e' il disegno dell'icona. Con un solo livello il fondo del
-   tema sostituiva l'icona invece di incorniciarla, e le anteprime scure
-   sembravano quadrati pieni. */
-.tp i {
-  display: block;
-  width: 24px;
-  height: 24px;
-  border-radius: 7px;
-  box-sizing: border-box;
+.iconbtn:hover { border-color: var(--brand); color: var(--ink); }
+.iconbtn svg { width: 14px; height: 14px; fill: none; stroke: currentColor; stroke-width: 1.4; stroke-linecap: round; stroke-linejoin: round; }
+.iconbtn.done { color: var(--accent); border-color: var(--accent); }
+
+.sub { display: grid; gap: 10px; }
+.sub[hidden] { display: none; }
+.file-row { display: flex; gap: 8px; align-items: center; }
+
+/* --- Cartella collegata --- */
+.folderbar { display: flex; gap: 8px; align-items: center; }
+
+.folderchip {
+  flex: 1;
+  min-width: 0;
+  display: flex;
+  align-items: center;
+  gap: 7px;
+  padding: 6px 8px;
+  border: 1px solid var(--line);
+  border-radius: 9px;
+  background: var(--surface-sunk);
+  font-size: 11.5px;
 }
 
-.tp i span {
-  display: block;
-  width: 100%;
-  height: 100%;
-  border-radius: 4px;
-  background: linear-gradient(140deg, #8e6a84, #4fb3b8);
+.folderchip[hidden] { display: none; }
+.folderchip svg { width: 13px; height: 13px; flex: none; fill: none; stroke: currentColor; stroke-width: 1.4; stroke-linejoin: round; }
+.folderchip span { flex: 1; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+
+.chip-go {
+  flex: none;
+  padding: 3px 8px;
+  border: 1px solid var(--brand);
+  border-radius: 6px;
+  background: transparent;
+  color: var(--ink);
+  font: inherit;
+  font-size: 11px;
+  cursor: pointer;
 }
 
-.ti-glass {
-  padding: 3px;
-  background: rgba(255, 255, 255, 0.16);
-  box-shadow: inset 0 0 0 1px rgba(255, 255, 255, 0.3);
+.chip-go[hidden] { display: none; }
+
+.chip-x {
+  flex: none;
+  width: 18px;
+  height: 18px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  padding: 0;
+  border: 0;
+  border-radius: 5px;
+  background: transparent;
+  color: var(--ink-soft);
+  cursor: pointer;
 }
 
-.ti-midnight {
-  padding: 3px;
-  background: rgba(12, 14, 20, 0.6);
-  box-shadow: inset 0 0 0 1px rgba(255, 255, 255, 0.12);
+.chip-x:hover { background: #a32d2d; color: #fff; }
+.chip-x svg { width: 11px; height: 11px; fill: none; stroke: currentColor; stroke-width: 1.6; stroke-linecap: round; }
+
+/* --- Galleria compatta: quattro sfondi recenti piu' il collegamento --- */
+.gallery { display: grid; grid-template-columns: repeat(5, 1fr); gap: 7px; }
+
+.gal-item {
+  position: relative;
+  aspect-ratio: 1;
+  padding: 0;
+  border: 1px solid var(--line);
+  border-radius: 10px;
+  overflow: hidden;
+  background-color: var(--surface-sunk);
+  background-size: cover;
+  background-position: center;
+  cursor: pointer;
+  color: var(--ink-soft);
 }
 
-.ti-daylight {
-  padding: 3px;
-  background: rgba(255, 255, 255, 0.62);
-  box-shadow: inset 0 0 0 1px rgba(0, 0, 0, 0.08);
+.gal-item:hover { border-color: var(--brand); }
+.gal-item[aria-current="true"] { border-color: var(--brand); box-shadow: 0 0 0 2px var(--brand); }
+
+/* Segnaposto e collegamento "vedi tutti" condividono l'aspetto neutro. */
+.gal-slot { display: flex; align-items: center; justify-content: center; border-style: dashed; }
+.gal-slot svg { width: 16px; height: 16px; fill: none; stroke: currentColor; stroke-width: 1.5; stroke-linecap: round; }
+.gal-more { display: flex; flex-direction: column; align-items: center; justify-content: center; gap: 3px; font-size: 9.5px; }
+.gal-more svg { width: 15px; height: 15px; fill: none; stroke: currentColor; stroke-width: 1.5; stroke-linecap: round; stroke-linejoin: round; }
+
+/* Icona di provenienza: sempre visibile, non solo al passaggio del mouse. */
+.gal-origin {
+  position: absolute;
+  top: 4px;
+  left: 4px;
+  width: 18px;
+  height: 18px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  border-radius: 6px;
+  background: rgba(12, 14, 20, 0.62);
+  color: #fff;
+  pointer-events: none;
 }
 
-/* Stessa tecnica del tema vero: filo sottile con il gradiente che scorre. */
-@property --ost-angle {
-  syntax: "<angle>";
-  initial-value: 0deg;
-  inherits: false;
-}
+.gal-origin svg { width: 10px; height: 10px; fill: none; stroke: currentColor; stroke-width: 1.6; stroke-linecap: round; stroke-linejoin: round; }
 
-.ti-rgb {
-  padding: 2px;
-  border: 2px solid transparent;
-  background:
-    linear-gradient(rgba(10, 12, 18, 0.55), rgba(10, 12, 18, 0.55)) padding-box,
-    conic-gradient(
-      from var(--ost-angle),
-      #ff0040, #ff8a00, #ffee00, #22d36a,
-      #00c2ff, #7a5cff, #ff00c8, #ff0040
-    ) border-box;
-  animation: ost-rgb-spin 4s linear infinite;
-}
-
-@keyframes ost-rgb-spin {
-  to { --ost-angle: 360deg; }
-}
-
-.ti-aurora {
-  padding: 3px;
-  background: linear-gradient(135deg, #714b67, #017e84);
-}
-
-.ti-outline { box-shadow: 0 0 0 1.5px rgba(255, 255, 255, 0.6); }
-.ti-lifted { filter: drop-shadow(0 4px 7px rgba(0, 0, 0, 0.65)); }
-.ti-greyscale span { filter: grayscale(1); }
-
-.ti-paper {
-  padding: 3px;
-  background: #f4f1ea;
-  box-shadow: 0 2px 5px rgba(0, 0, 0, 0.3);
-}
-
-/* Colore delle didascalie: controllo separato dai temi. */
-.subrow {
+/* --- Libreria --- */
+.libhead {
   display: flex;
   align-items: center;
   gap: 10px;
-  margin-top: 12px;
+  padding: 12px 16px;
+  background: var(--surface);
+  border-bottom: 1px solid var(--line);
 }
 
-.sublabel { flex: none; font-weight: 500; }
-.seg-inline { flex: 1; }
+.libtitle { flex: 1; font-weight: 600; font-size: 13px; }
+.libcount { color: var(--ink-soft); font-size: 11.5px; }
+.libgrid { display: grid; grid-template-columns: repeat(4, 1fr); gap: 9px; padding: 13px 14px; }
 
-/* Dominio a cui appartengono le impostazioni di aspetto. */
-.scope {
-  margin: 6px 0 0;
-  padding: 3px 7px;
-  border-radius: 5px;
-  background: var(--surface-sunk);
-  color: var(--ink-soft);
-  font-family: ui-monospace, SFMono-Regular, Menlo, monospace;
-  font-size: 10.5px;
+.lib-item {
+  position: relative;
+  aspect-ratio: 1;
+  padding: 0;
+  border: 1px solid var(--line);
+  border-radius: 11px;
   overflow: hidden;
-  text-overflow: ellipsis;
-  white-space: nowrap;
+  background-color: var(--card);
+  background-size: cover;
+  background-position: center;
+  cursor: pointer;
 }
+
+.lib-item[aria-current="true"] { border-color: var(--brand); box-shadow: 0 0 0 2px var(--brand); }
+
+.lib-origin {
+  position: absolute;
+  top: 5px;
+  left: 5px;
+  width: 20px;
+  height: 20px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  border-radius: 6px;
+  background: rgba(12, 14, 20, 0.62);
+  color: #fff;
+  pointer-events: none;
+}
+
+.lib-origin svg { width: 11px; height: 11px; fill: none; stroke: currentColor; stroke-width: 1.5; stroke-linecap: round; stroke-linejoin: round; }
+
+.lib-del {
+  position: absolute;
+  top: 5px;
+  right: 5px;
+  width: 24px;
+  height: 24px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  padding: 0;
+  border: 0;
+  border-radius: 7px;
+  background: rgba(12, 14, 20, 0.72);
+  color: #fff;
+  opacity: 0;
+  cursor: pointer;
+  transition: opacity 0.12s ease;
+}
+
+.lib-item:hover .lib-del, .lib-item:focus-within .lib-del { opacity: 1; }
+.lib-del:hover { background: #a32d2d; }
+.lib-del svg { width: 12px; height: 12px; fill: none; stroke: currentColor; stroke-width: 1.4; stroke-linecap: round; }
+
+.libempty { padding: 26px 16px; margin: 0; color: var(--ink-soft); font-size: 12px; text-align: center; }
 
 /* --- Targhetta ambiente --- */
 .badgerow { display: flex; gap: 12px; align-items: stretch; }
 .badgeside { flex: 1; display: flex; flex-direction: column; justify-content: space-between; gap: 8px; }
 
-/* Quattro quadranti: la posizione si sceglie indicandola, non leggendola. */
 .corners {
   flex: none;
   display: grid;
@@ -281,7 +530,7 @@ code { font-family: ui-monospace, SFMono-Regular, Menlo, monospace; font-size: 1
   height: 62px;
   padding: 3px;
   border: 1px solid var(--line);
-  border-radius: var(--radius);
+  border-radius: 10px;
   background: var(--surface-sunk);
 }
 
@@ -292,7 +541,7 @@ code { font-family: ui-monospace, SFMono-Regular, Menlo, monospace; font-size: 1
 .corner[data-corner="bl"] i { bottom: 3px; left: 3px; }
 .corner[data-corner="br"] i { bottom: 3px; right: 3px; }
 .corner:hover i { background: var(--ink-soft); }
-.corner[aria-checked="true"] { background: var(--surface); box-shadow: inset 0 0 0 1px var(--brand); }
+.corner[aria-checked="true"] { background: var(--card); box-shadow: inset 0 0 0 1px var(--brand); }
 .corner[aria-checked="true"] i { background: var(--brand); }
 
 .badgepreview {
@@ -314,21 +563,14 @@ code { font-family: ui-monospace, SFMono-Regular, Menlo, monospace; font-size: 1
   aspect-ratio: 1;
   padding: 0;
   border: 1px solid var(--line);
-  border-radius: 6px;
+  border-radius: 7px;
   background: var(--surface-sunk);
   cursor: pointer;
   overflow: hidden;
 }
 
 .sw[aria-checked="true"] { box-shadow: 0 0 0 2px var(--brand); border-color: var(--brand); }
-
-/* Il campione automatico mostra i tre colori dell'ambiente in un colpo solo. */
-.sw-auto span {
-  position: absolute;
-  inset: 0;
-  background: linear-gradient(135deg, #d0442c 0 33%, #c9761e 33% 66%, #1f7a4d 66% 100%);
-}
-
+.sw-auto span { position: absolute; inset: 0; background: linear-gradient(135deg, #d0442c 0 33%, #c9761e 33% 66%, #1f7a4d 66% 100%); }
 .sw-custom { display: block; }
 .sw-custom input[type="color"] {
   position: absolute;
@@ -341,181 +583,52 @@ code { font-family: ui-monospace, SFMono-Regular, Menlo, monospace; font-size: 1
   cursor: pointer;
 }
 
-/* --- Sotto-pannelli condizionali --- */
-.sub { margin-top: 12px; display: grid; gap: 11px; }
-.sub[hidden] { display: none; }
+/* --- Editor --- */
+.editor-empty { padding: 46px 16px; margin: 0; color: var(--ink-soft); font-size: 12.5px; text-align: center; }
+.editor-body { padding: 13px 14px; }
 
-/* --- Controlli --- */
-.text {
-  width: 100%;
-  min-width: 0;
-  padding: 7px 9px;
-  border: 1px solid var(--line);
-  border-radius: var(--radius);
-  background: var(--surface-sunk);
-  color: var(--ink);
-  font-family: ui-monospace, SFMono-Regular, Menlo, monospace;
-  font-size: 11.5px;
-}
-
-.seg { display: flex; gap: 4px; padding: 3px; border-radius: var(--radius); background: var(--surface-sunk); }
-.seg-inner { background: transparent; padding: 0; }
-
-.seg-btn {
-  flex: 1;
-  padding: 5px 0;
-  border: 0;
-  border-radius: 7px;
-  background: transparent;
-  color: var(--ink-soft);
-  font: inherit;
-  cursor: pointer;
-}
-
-.seg-inner .seg-btn { border: 1px solid var(--line); font-size: 11.5px; }
-
-.seg-btn[aria-selected="true"] {
-  background: var(--surface);
-  color: var(--ink);
-  font-weight: 500;
-  box-shadow: 0 1px 2px rgba(0, 0, 0, 0.12);
-}
-
-.seg-inner .seg-btn[aria-selected="true"] { border-color: var(--brand); box-shadow: none; }
-
-.pane { display: grid; gap: 9px; }
-.pane[hidden] { display: none; }
-
-.file-row { display: flex; gap: 8px; align-items: center; }
-
-.btn {
-  padding: 6px 11px;
-  border: 1px solid var(--line);
-  border-radius: var(--radius);
-  background: var(--surface-sunk);
-  color: var(--ink);
-  font: inherit;
-  cursor: pointer;
-  white-space: nowrap;
-}
-
-.btn:hover { border-color: var(--brand); }
-.btn-quiet { color: var(--ink-soft); }
-
-.link {
-  padding: 0;
-  border: 0;
-  background: none;
-  color: var(--accent);
-  font: inherit;
-  font-size: 11.5px;
-  cursor: pointer;
-}
-
-/* --- Strisce recenti --- */
-.recentwrap { display: grid; gap: 6px; }
-.recentwrap[hidden] { display: none; }
-
-.recenthead {
-  display: flex;
-  justify-content: space-between;
-  align-items: baseline;
-  color: var(--ink-soft);
-  font-size: 11.5px;
-}
-
-.recent { display: flex; gap: 6px; }
-
-.recent button {
-  flex: 1;
-  height: 36px;
-  padding: 0;
-  border: 1px solid var(--line);
-  border-radius: 7px;
-  background-color: var(--surface-sunk);
-  background-size: cover;
-  background-position: center;
-  cursor: pointer;
-}
-
-.recent button[aria-current="true"] { border-color: var(--brand); box-shadow: 0 0 0 1px var(--brand); }
-
-/* --- Libreria --- */
-.libhead {
-  display: flex;
-  align-items: center;
-  gap: 10px;
-  padding: 12px 16px;
-  border-bottom: 1px solid var(--line);
-}
-
-.libtitle { flex: 1; font-weight: 500; }
-.libcount { color: var(--ink-soft); font-size: 11.5px; }
-
-.libgrid { display: grid; grid-template-columns: 1fr 1fr; gap: 10px; padding: 14px 16px; }
-
-.lib-item {
-  position: relative;
-  aspect-ratio: 1;
-  padding: 0;
-  border: 1px solid var(--line);
-  border-radius: 12px;
-  overflow: hidden;
-  background-color: var(--surface-sunk);
-  background-size: cover;
-  background-position: center;
-  cursor: pointer;
-}
-
-.lib-item[aria-current="true"] { border-color: var(--brand); box-shadow: 0 0 0 2px var(--brand); }
-
-.lib-del {
-  position: absolute;
-  top: 6px;
-  right: 6px;
-  width: 26px;
-  height: 26px;
-  display: flex;
-  align-items: center;
-  justify-content: center;
-  padding: 0;
-  border: 0;
+.editor-state {
+  margin: 0 0 11px;
+  padding: 6px 9px;
   border-radius: 8px;
-  background: rgba(12, 14, 20, 0.72);
-  color: #fff;
-  opacity: 0;
-  cursor: pointer;
-  transition: opacity 0.12s ease;
-}
-
-.lib-item:hover .lib-del,
-.lib-item:focus-within .lib-del { opacity: 1; }
-.lib-del:hover { background: #a32d2d; }
-.lib-del svg { width: 13px; height: 13px; fill: none; stroke: currentColor; stroke-width: 1.4; stroke-linecap: round; }
-
-.libempty { padding: 24px 16px; margin: 0; color: var(--ink-soft); font-size: 12px; text-align: center; }
-
-/* --- Slider --- */
-.slider label {
-  display: flex;
-  justify-content: space-between;
+  background: var(--card);
+  border: 1px solid var(--line);
   color: var(--ink-soft);
   font-size: 11.5px;
-  font-weight: 400;
-  margin-bottom: 5px;
 }
 
-.slider output { font-family: ui-monospace, SFMono-Regular, Menlo, monospace; color: var(--ink); }
+.editor-state.ready { color: var(--accent); }
+.cmdlist { display: grid; gap: 8px; }
 
-input[type="range"] { appearance: none; width: 100%; height: 3px; border-radius: 3px; background: var(--line); }
-input[type="range"]::-webkit-slider-thumb { appearance: none; width: 14px; height: 14px; border-radius: 50%; background: var(--brand); cursor: pointer; }
+.cmd {
+  display: block;
+  width: 100%;
+  padding: 10px 12px;
+  border: 1px solid var(--line);
+  border-radius: 11px;
+  background: var(--card);
+  color: var(--ink);
+  font: inherit;
+  text-align: left;
+  cursor: pointer;
+  box-shadow: var(--shadow);
+}
 
-/* Anteprima dell'arrotondamento: reagisce dal vivo allo slider. */
-.preview { display: flex; justify-content: center; padding: 6px 0 2px; }
-.preview-icon { width: 46px; height: 46px; background: linear-gradient(140deg, var(--brand), var(--accent)); transition: border-radius 0.12s ease; }
+.cmd:hover:not(:disabled) { border-color: var(--brand); }
+.cmd:disabled { opacity: 0.45; cursor: default; box-shadow: none; }
+.cmd-name { display: block; font-family: ui-monospace, SFMono-Regular, Menlo, monospace; font-size: 12px; font-weight: 500; }
+.cmd-note { display: block; margin-top: 2px; color: var(--ink-soft); font-size: 11.5px; }
 
 /* --- Piede --- */
-.foot { display: flex; align-items: center; justify-content: space-between; padding: 10px 16px; }
+.foot {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  padding: 9px 16px;
+  background: var(--surface);
+  border-top: 1px solid var(--line);
+}
+
 .saved { color: var(--accent); font-size: 11.5px; opacity: 0; transition: opacity 0.2s ease; }
 .saved.on { opacity: 1; }
 
