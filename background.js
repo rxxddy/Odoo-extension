@@ -90,3 +90,91 @@ chrome.runtime.onMessage.addListener((message, sender, sendResponse) => {
   }
   return false;
 });
+
+// ------------------------------------------------------------------
+// Icona attiva/inattiva sulla barra degli strumenti
+// ------------------------------------------------------------------
+
+const STATIC_ODOO_RE = /(^|\.)odoo\.(com|sh)$/i;
+const SETTINGS_KEY = "ost_settings";
+
+const ICON_SETS = {
+  active: { 16: "icons/icon16_active.png", 32: "icons/icon32_active.png", 48: "icons/icon48_active.png", 128: "icons/icon128_active.png" },
+  inactive: { 16: "icons/icon16.png", 32: "icons/icon32.png", 48: "icons/icon48.png", 128: "icons/icon128.png" },
+};
+
+/**
+ * "Attivo" per l'icona significa la stessa cosa che significa per il content
+ * script: interruttore generale acceso, e dominio odoo.com/odoo.sh oppure
+ * riconosciuto manualmente. Non si interroga la scheda: e' la stessa
+ * condizione che decide se il content script parte, calcolata pero' qui senza
+ * bisogno del permesso "tabs" per leggere gli URL di schede arbitrarie.
+ */
+async function isHostActive(hostname) {
+  if (!hostname) {
+    return false;
+  }
+  const store = await chrome.storage.local.get([SETTINGS_KEY, CUSTOM_HOSTS_KEY]);
+  const settings = store[SETTINGS_KEY];
+  if (settings && settings.enabled === false) {
+    return false;
+  }
+  if (STATIC_ODOO_RE.test(hostname)) {
+    return true;
+  }
+  const hosts = store[CUSTOM_HOSTS_KEY];
+  return Array.isArray(hosts) && hosts.includes(hostname);
+}
+
+/**
+ * Se l'URL non e' leggibile (nessun permesso su quell'origine) lo si tratta
+ * da inattivo: e' la scelta piu' prudente, e in pratica su quei domini il
+ * content script non gira comunque.
+ */
+async function updateActionIcon(tabId, url) {
+  if (tabId === undefined || tabId === null) {
+    return;
+  }
+  let hostname = "";
+  if (url) {
+    try {
+      hostname = new URL(url).hostname;
+    } catch (err) {
+      hostname = "";
+    }
+  }
+  const active = await isHostActive(hostname);
+  try {
+    await chrome.action.setIcon({ tabId, path: active ? ICON_SETS.active : ICON_SETS.inactive });
+  } catch (err) {
+    // La scheda puo' essersi gia' chiusa nel frattempo: non c'e' altro da fare.
+  }
+}
+
+chrome.tabs.onUpdated.addListener((tabId, changeInfo, tab) => {
+  if (changeInfo.status === "complete" || changeInfo.url) {
+    updateActionIcon(tabId, tab && tab.url);
+  }
+});
+
+chrome.tabs.onActivated.addListener(({ tabId }) => {
+  chrome.tabs.get(tabId, (tab) => {
+    if (chrome.runtime.lastError) {
+      return;
+    }
+    updateActionIcon(tabId, tab && tab.url);
+  });
+});
+
+// L'interruttore generale o un nuovo dominio riconosciuto cambiano lo stato
+// "attivo" per TUTTE le schede in un colpo solo: si ricalcola l'icona ovunque.
+chrome.storage.onChanged.addListener((changes, area) => {
+  if (area !== "local" || !(SETTINGS_KEY in changes || CUSTOM_HOSTS_KEY in changes)) {
+    return;
+  }
+  chrome.tabs.query({}, (tabs) => {
+    for (const tab of tabs) {
+      updateActionIcon(tab.id, tab.url);
+    }
+  });
+});

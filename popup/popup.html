@@ -9,24 +9,37 @@
   <header class="head">
     <div class="head-row">
       <img src="/icons/icon128.png" class="mark" alt="Logo" aria-hidden="true">
-      <div class="head-text">
-        <h1>UI Enhancer for Odoo <span class="badge-beta">BETA</span></h1>
-        <p class="dbchip" id="dbchip">
-          <svg viewBox="0 0 16 16" aria-hidden="true"><ellipse cx="8" cy="3.4" rx="5.4" ry="2.2"/><path d="M2.6 3.4v9.2c0 1.2 2.4 2.2 5.4 2.2s5.4-1 5.4-2.2V3.4"/><path d="M2.6 8c0 1.2 2.4 2.2 5.4 2.2s5.4-1 5.4-2.2"/></svg>
-          <span id="dbname">no Odoo page</span>
-        </p>
-      </div>
-      <button type="button" class="iconbtn" id="copyDb" aria-label="Copy database name" title="Copy database name">
-        <svg viewBox="0 0 16 16" aria-hidden="true"><rect x="5.5" y="5.5" width="8" height="9" rx="1.5"/><path d="M10.5 3.5v-1a1 1 0 0 0-1-1h-6a1 1 0 0 0-1 1v7a1 1 0 0 0 1 1h1"/></svg>
-      </button>
-      <input type="checkbox" id="enabled" class="switch" aria-label="Enable the extension" title="Turn everything on or off">
+      <h1>UI Enhancer for Odoo <span class="badge-beta">BETA</span></h1>
+      <button type="button" class="pro-chip" id="proChip" title="View your PRO status">PRO</button>
+      <img src="/icons/user.png" class="avatar" alt="Account" id="userAvatar">
     </div>
   </header>
 
   <nav class="tabs" role="tablist" aria-label="Sections">
     <button type="button" class="tab" data-screen="appearance" role="tab">Appearance</button>
     <button type="button" class="tab" data-screen="developer" role="tab">Developer</button>
+    <div class="tabs-spacer"></div>
+    <p class="dbchip" id="dbchip">
+      <svg viewBox="0 0 16 16" aria-hidden="true"><ellipse cx="8" cy="3.4" rx="5.4" ry="2.2"/><path d="M2.6 3.4v9.2c0 1.2 2.4 2.2 5.4 2.2s5.4-1 5.4-2.2V3.4"/><path d="M2.6 8c0 1.2 2.4 2.2 5.4 2.2s5.4-1 5.4-2.2"/></svg>
+      <span id="dbname">no Odoo page</span>
+    </p>
+    <button type="button" class="iconbtn" id="copyDb" aria-label="Copy database name" title="Copy database name">
+      <svg viewBox="0 0 16 16" aria-hidden="true"><rect x="5.5" y="5.5" width="8" height="9" rx="1.5"/><path d="M10.5 3.5v-1a1 1 0 0 0-1-1h-6a1 1 0 0 0-1 1v7a1 1 0 0 0 1 1h1"/></svg>
+    </button>
+    <input type="checkbox" id="enabled" class="switch" aria-label="Enable the extension" title="Turn everything on or off">
   </nav>
+
+  <!-- ===================== BENVENUTO PRO ===================== -->
+  <div class="pro-overlay" id="proOverlay" hidden>
+    <div class="pro-modal">
+      <div class="pro-modal-badge">PRO</div>
+      <h2>Welcome aboard, beta tester!</h2>
+      <p>Thank you for helping us test the extension. As a thank-you, we're gifting you a <strong>PRO subscription</strong> for as long as the beta lasts — completely free.</p>
+      <p class="pro-note">A PRO feature switches on with this colour instead of the usual one — that's how you'll spot it.</p>
+      <p class="pro-fine">*We'll give you at least 30 days' notice before the beta, and this subscription, ever ends.</p>
+      <button type="button" class="btn btn-accent pro-modal-btn" id="proUnderstood">I understood</button>
+    </div>
+  </div>
 
   <!-- ===================== ASPETTO ===================== -->
   <main id="screenAppearance">
@@ -154,7 +167,7 @@
 
         <!-- Врезка внутри Wallpaper: заливка цветом или двухцветным градиентом,
              как альтернатива фото/видео. -->
-        <div class="tintbox">
+        <div class="tintbox card-pro">
           <div class="tintbox-head">
             <input type="checkbox" id="tintEnabled" class="switch" title="Use a solid colour or gradient as the wallpaper">
             <span class="tintbox-title">Solid or gradient</span>
@@ -225,7 +238,7 @@
 
   <!-- ===================== SVILUPPO ===================== -->
   <section id="screenDeveloper" hidden>
-    <section class="card">
+    <section class="card card-pro">
       <div class="card-head"><h2>On-page noise</h2></div>
       <div class="ctrlrow">
         <div class="ctrl-text">
@@ -243,7 +256,7 @@
       </div>
     </section>
 
-    <section class="card">
+    <section class="card card-pro">
       <div class="card-head"><h2>Tools</h2></div>
       <div class="ctrlrow">
         <div class="ctrl-text">
@@ -268,7 +281,7 @@
       </div>
     </section>
 
-    <section class="card">
+    <section class="card card-pro">
       <div class="card-head">
         <h2>Environment badge</h2>
         <input type="checkbox" id="badgeEnabled" class="switch">

@@ -161,6 +161,9 @@
     // Ritocchi all'interfaccia dell'editor di Odoo.sh: aggiunge la voce
     // "odoo-bin shell" nella barra dei menu di JupyterLab.
     shellUi: false,
+    // Il popup di benvenuto PRO va mostrato una sola volta: dopo il primo
+    // "I understood" resta disponibile solo su richiesta, dal chip in alto.
+    proAcknowledged: false,
   };
 
   /** Aspetto: memorizzato separatamente per ogni dominio. */

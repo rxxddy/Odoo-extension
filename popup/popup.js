@@ -1317,6 +1317,14 @@
     });
 
     el("copyDb").addEventListener("click", copyDatabase);
+
+    el("proChip").addEventListener("click", () => {
+      el("proOverlay").hidden = false;
+    });
+    el("proUnderstood").addEventListener("click", () => {
+      el("proOverlay").hidden = true;
+      update({ proAcknowledged: true });
+    });
     el("recognizeBtn").addEventListener("click", recognizeDomain);
 
     el("reset").addEventListener("click", () => {
@@ -1590,6 +1598,9 @@
     buildIconSelects();
     bind();
     render();
+    // Il popup di benvenuto va mostrato una sola volta: dopo la prima
+    // conferma resta comunque disponibile su richiesta dal chip PRO.
+    el("proOverlay").hidden = !!settings.proAcknowledged;
     showScreen(settings.lastScreen || "appearance");
     // Dopo il primo disegno: la lettura della cartella e' asincrona e non deve
     // ritardare la comparsa del resto dell'interfaccia.
