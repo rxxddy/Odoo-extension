@@ -424,6 +424,7 @@
    * i due finiscano per disegnare cose leggermente diverse.
    */
   function renderTintBox() {
+    el("tintEnabled").checked = profile.wallpaperKind === "color" && profile.wallpaperEnabled;
     selectGroup(".seg-btn[data-fill]", "fill", profile.wallpaperGradient ? "gradient" : "solid");
     el("tintColor1").value = profile.wallpaperColor1;
     el("tintColor2").value = profile.wallpaperColor2;
@@ -434,6 +435,16 @@
     el("tintPreview").style.background = profile.wallpaperGradient
       ? `linear-gradient(${profile.wallpaperAngle}deg, ${profile.wallpaperColor1}, ${profile.wallpaperColor2})`
       : profile.wallpaperColor1;
+
+    const hasLogo = !!media.logoData;
+    el("clearLogo").hidden = !hasLogo;
+    el("logoControls").hidden = !hasLogo;
+    el("logoSize").value = profile.logoSize;
+    el("logoSizeOut").textContent = profile.logoSize + "px";
+    el("logoX").value = profile.logoX;
+    el("logoXOut").textContent = profile.logoX + "%";
+    el("logoY").value = profile.logoY;
+    el("logoYOut").textContent = profile.logoY + "%";
   }
 
   /**
@@ -797,6 +808,33 @@
     } catch (err) {
       note.textContent = "That file couldn't be read. Try a PNG, JPG, WebP or GIF.";
     }
+  }
+
+  /**
+   * Logo mostrato sopra alla tinta. Non entra ne' in libreria ne' nella
+   * galleria: e' un unico elemento accessorio della tinta, non uno sfondo a
+   * se' fra cui scegliere.
+   */
+  async function handleLogoFile(file) {
+    if (!globalThis.ostAllowedImage(file)) {
+      return;
+    }
+    try {
+      media.logoData = await normalizeImage(await readAsDataUrl(file));
+      media.logoName = file.name;
+      saveMedia();
+      render();
+    } catch (err) {
+      // Nessun campo di errore dedicato qui: il pulsante resta semplicemente
+      // com'era, senza logo applicato.
+    }
+  }
+
+  function clearLogo() {
+    media.logoData = "";
+    media.logoName = "";
+    saveMedia();
+    render();
   }
 
   function handleImageUrl(url) {
@@ -1206,6 +1244,46 @@
     el("tintColor1").addEventListener("input", (e) => applyTint({ wallpaperColor1: e.target.value }));
     el("tintColor2").addEventListener("input", (e) => applyTint({ wallpaperColor2: e.target.value }));
     el("tintAngle").addEventListener("input", (e) => applyTint({ wallpaperAngle: Number(e.target.value) }));
+
+    // Il tumblo si spegne da solo quando si passa a una foto/video (il
+    // profilo non e' piu' su wallpaperKind "color"): riaccenderlo torna alla
+    // tinta gia' impostata invece di ripartire da zero.
+    el("tintEnabled").addEventListener("change", (e) => {
+      if (e.target.checked) {
+        applyTint({});
+      } else {
+        updateProfile({ wallpaperEnabled: false });
+      }
+    });
+
+    el("tintCollapse").addEventListener("click", () => {
+      const willExpand = el("tintBody").hidden;
+      el("tintBody").hidden = !willExpand;
+      el("tintCollapse").setAttribute("aria-expanded", String(willExpand));
+    });
+
+    el("pickLogo").addEventListener("click", () => el("logoInput").click());
+    el("logoInput").addEventListener("change", (e) => {
+      const file = e.target.files && e.target.files[0];
+      if (file) {
+        handleLogoFile(file);
+      }
+      e.target.value = "";
+    });
+    el("clearLogo").addEventListener("click", clearLogo);
+    bindProfileRange("logoSize", (v) => {
+      profile.logoSize = v;
+      el("logoSizeOut").textContent = v + "px";
+    });
+    bindProfileRange("logoX", (v) => {
+      profile.logoX = v;
+      el("logoXOut").textContent = v + "%";
+    });
+    bindProfileRange("logoY", (v) => {
+      profile.logoY = v;
+      el("logoYOut").textContent = v + "%";
+    });
+
     el("unlinkFolder").addEventListener("click", unlinkFolder);
 
     el("libBack").addEventListener("click", () => showScreen("appearance"));

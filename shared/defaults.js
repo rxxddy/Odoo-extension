@@ -192,6 +192,11 @@
     wallpaperColor2: "#017e84",
     wallpaperGradient: false,
     wallpaperAngle: 135,
+    // Logo sopra la tinta: posizione in percentuale del viewport, dimensione
+    // in pixel. I dati veri dell'immagine stanno in media.logoData.
+    logoX: 50,
+    logoY: 50,
+    logoSize: 160,
     // Esclusione della targhetta, decisa dominio per dominio.
     badgeHidden: false,
   };
@@ -203,6 +208,9 @@
     // Prima immagine del video caricato a mano: senza cronologia da cui
     // pescarla come per i video di cartella, va generata e conservata qui.
     videoThumb: "",
+    // Logo mostrato sopra alla tinta unita o alla sfumatura.
+    logoData: "",
+    logoName: "",
   };
 
   /**
@@ -299,6 +307,9 @@
     }
     p.wallpaperGradient = !!p.wallpaperGradient;
     p.wallpaperAngle = ((Math.round(Number(p.wallpaperAngle)) % 360) + 360) % 360;
+    p.logoX = Math.min(100, Math.max(0, Number(p.logoX) || 0));
+    p.logoY = Math.min(100, Math.max(0, Number(p.logoY) || 0));
+    p.logoSize = Math.min(480, Math.max(40, Number(p.logoSize) || 160));
     p.iconRadius = Math.min(34, Math.max(0, Number(p.iconRadius) || 0));
 
     for (const key of Object.keys(p)) {

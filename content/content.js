@@ -11,6 +11,7 @@
   const STYLE_ID = "ost-injected-style";
   const LAYER_ID = "ost-media-layer";
   const VIDEO_ON_CLASS = "ost-video-on";
+  const LOGO_LAYER_ID = "ost-logo-layer";
   // Flag di sessione: evita un loop di redirect se il server non onora il
   // parametro debug (utente non interno, sessione senza permessi, ecc.).
   const DEBUG_FLAG = "ost:debug-attempted";
@@ -142,12 +143,20 @@
     if (mode === "color") {
       // Un colore o una sfumatura non ha bisogno di dati esterni: si compone
       // qui e basta, a differenza di immagine e video.
-      const flat = profile.wallpaperColor1;
-      const gradient = `linear-gradient(${profile.wallpaperAngle}deg, ${profile.wallpaperColor1}, ${profile.wallpaperColor2})`;
+      const hasLogo = !!activeLogo();
+      // Sempre come livello di background-image, mai background-color da solo:
+      // e' l'unico modo per anteporgli il velo scurente con la stessa tecnica
+      // gia' usata per le immagini.
+      const flatLayer = `linear-gradient(${profile.wallpaperColor1}, ${profile.wallpaperColor1})`;
+      const gradientLayer = `linear-gradient(${profile.wallpaperAngle}deg, ${profile.wallpaperColor1}, ${profile.wallpaperColor2})`;
+      const base = profile.wallpaperGradient ? gradientLayer : flatLayer;
+      // Quando c'e' un logo il velo scurente vive sul suo stesso livello (piu'
+      // sotto), cosi' scurisce anche lui in un colpo solo: metterlo pure qui
+      // lo farebbe scurire due volte.
+      const veil = !hasLogo && dim > 0 ? `linear-gradient(rgba(0, 0, 0, ${dim}), rgba(0, 0, 0, ${dim})), ` : "";
       chunks.push(`
         body.o_home_menu_background {
-          background-image: ${profile.wallpaperGradient ? gradient : "none"} !important;
-          background-color: ${profile.wallpaperGradient ? "transparent" : flat} !important;
+          background-image: ${veil}${base} !important;
           background-attachment: fixed !important;
         }
         body.o_home_menu_background .o_home_menu {
@@ -155,6 +164,29 @@
           background-color: transparent !important;
         }
       `);
+
+      if (hasLogo) {
+        chunks.push(`
+          #${LOGO_LAYER_ID} {
+            position: fixed;
+            inset: 0;
+            z-index: -1;
+            overflow: hidden;
+            pointer-events: none;
+          }
+          body:not(.o_home_menu_background) #${LOGO_LAYER_ID} { display: none; }
+          #${LOGO_LAYER_ID} img {
+            position: absolute;
+            transform: translate(-50%, -50%);
+            max-width: none;
+          }
+          #${LOGO_LAYER_ID} .ost-media-veil {
+            position: absolute;
+            inset: 0;
+            background: rgba(0, 0, 0, ${dim});
+          }
+        `);
+      }
     }
 
     if (mode === "video") {
@@ -396,6 +428,71 @@
       removeVideoLayer();
     }
     ensureVideoLayer();
+  }
+
+  // ------------------------------------------------------------------
+  // 2b. Logo sopra la tinta
+  // ------------------------------------------------------------------
+
+  function activeLogo() {
+    return media.logoData || "";
+  }
+
+  function removeLogoLayer() {
+    const layer = document.getElementById(LOGO_LAYER_ID);
+    if (layer) {
+      layer.remove();
+    }
+  }
+
+  /**
+   * Il logo e gia' incorporato come data URL: a differenza del video non
+   * serve un object URL, e' un'immagine, non un flusso da bufferizzare.
+   */
+  function ensureLogoLayer() {
+    if (!document.body) {
+      return;
+    }
+    let layer = document.getElementById(LOGO_LAYER_ID);
+    if (!layer) {
+      layer = document.createElement("div");
+      layer.id = LOGO_LAYER_ID;
+      layer.setAttribute("aria-hidden", "true");
+
+      const img = document.createElement("img");
+      img.alt = "";
+      // Se il logo non si carica non ha senso lasciare un livello vuoto
+      // sopra allo sfondo: si toglie e basta, torna la sola tinta.
+      img.addEventListener("error", removeLogoLayer, { once: true });
+
+      const veil = document.createElement("div");
+      veil.className = "ost-media-veil";
+
+      layer.appendChild(img);
+      layer.appendChild(veil);
+      // Primo figlio di body, come il livello video: con z-index negativo
+      // resta dietro a tutto il contenuto applicativo.
+      document.body.insertBefore(layer, document.body.firstChild);
+    }
+
+    const img = layer.querySelector("img");
+    const src = activeLogo();
+    if (img.dataset.ostSrc !== src) {
+      img.dataset.ostSrc = src;
+      img.src = src;
+    }
+    img.style.width = `${Number(profile.logoSize) || 160}px`;
+    img.style.left = `${Number(profile.logoX) || 50}%`;
+    img.style.top = `${Number(profile.logoY) || 50}%`;
+  }
+
+  /** Il logo vale solo in modalita' colore: sparisce da solo con foto o video. */
+  function applyLogoLayer() {
+    if (wallpaperMode() !== "color" || !activeLogo()) {
+      removeLogoLayer();
+      return;
+    }
+    ensureLogoLayer();
   }
 
   // ------------------------------------------------------------------
@@ -1228,6 +1325,10 @@
       removeVideoLayer();
       hadSomething = true;
     }
+    if (document.getElementById(LOGO_LAYER_ID)) {
+      removeLogoLayer();
+      hadSomething = true;
+    }
     const badge = document.getElementById("ost-env-badge");
     if (badge) {
       badge.remove();
@@ -1269,6 +1370,7 @@
     applyCss();
     applyIconArtwork();
     applyMediaLayer();
+    applyLogoLayer();
     if (settings.enabled && settings.shellUi && editorPresent()) {
       injectBridge();
     }

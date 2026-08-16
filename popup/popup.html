@@ -156,25 +156,58 @@
              как альтернатива фото/видео. -->
         <div class="tintbox">
           <div class="tintbox-head">
+            <input type="checkbox" id="tintEnabled" class="switch" title="Use a solid colour or gradient as the wallpaper">
             <span class="tintbox-title">Solid or gradient</span>
             <div class="seg seg-inline" role="tablist" aria-label="Fill type">
               <button type="button" class="seg-btn" data-fill="solid" role="tab">Solid</button>
               <button type="button" class="seg-btn" data-fill="gradient" role="tab">Gradient</button>
             </div>
+            <button type="button" class="tintbox-collapse" id="tintCollapse" aria-label="Collapse" aria-expanded="true">
+              <svg viewBox="0 0 16 16" aria-hidden="true"><path d="M4 6.5 8 10.5 12 6.5"/></svg>
+            </button>
           </div>
 
-          <div class="tintrow">
-            <label class="swatch-lg" title="Colour 1">
-              <input type="color" id="tintColor1">
-            </label>
-            <label class="swatch-lg" id="tintColor2Wrap" title="Colour 2">
-              <input type="color" id="tintColor2">
-            </label>
-            <div class="tint-preview" id="tintPreview"></div>
-          </div>
-          <div class="slider" id="tintAngleWrap">
-            <label for="tintAngle">Angle <output id="angleOut"></output></label>
-            <input type="range" id="tintAngle" min="0" max="360" step="5">
+          <div class="tintbox-body" id="tintBody">
+            <div class="tintrow">
+              <label class="swatch-lg" title="Colour 1">
+                <input type="color" id="tintColor1">
+              </label>
+              <label class="swatch-lg" id="tintColor2Wrap" title="Colour 2">
+                <input type="color" id="tintColor2">
+              </label>
+              <div class="tint-preview" id="tintPreview"></div>
+            </div>
+            <div class="slider" id="tintAngleWrap">
+              <label for="tintAngle">Angle <output id="angleOut"></output></label>
+              <input type="range" id="tintAngle" min="0" max="360" step="5">
+            </div>
+
+            <!-- Логотип поверх цвета/градиента: своё положение и размер,
+                 подчиняется общему ползунку Darken снизу. -->
+            <div class="logobox">
+              <div class="logobox-head">
+                <span class="logobox-title">Logo</span>
+                <div class="file-row">
+                  <button type="button" class="btn" id="pickLogo">Upload logo</button>
+                  <button type="button" class="btn btn-quiet" id="clearLogo" hidden>Remove</button>
+                  <input type="file" id="logoInput" accept="image/png,image/jpeg,image/webp,image/gif" hidden>
+                </div>
+              </div>
+              <div class="logobox-controls" id="logoControls" hidden>
+                <div class="slider">
+                  <label for="logoSize">Size <output id="logoSizeOut"></output></label>
+                  <input type="range" id="logoSize" min="40" max="480" step="10">
+                </div>
+                <div class="slider">
+                  <label for="logoX">Horizontal <output id="logoXOut"></output></label>
+                  <input type="range" id="logoX" min="0" max="100" step="1">
+                </div>
+                <div class="slider">
+                  <label for="logoY">Vertical <output id="logoYOut"></output></label>
+                  <input type="range" id="logoY" min="0" max="100" step="1">
+                </div>
+              </div>
+            </div>
           </div>
         </div>
 
