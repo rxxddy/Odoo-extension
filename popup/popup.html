@@ -26,7 +26,6 @@
   <nav class="tabs" role="tablist" aria-label="Sections">
     <button type="button" class="tab" data-screen="appearance" role="tab">Appearance</button>
     <button type="button" class="tab" data-screen="developer" role="tab">Developer</button>
-    <button type="button" class="tab" data-screen="editor" role="tab">Editor</button>
   </nav>
 
   <!-- ===================== ASPETTO ===================== -->
@@ -153,6 +152,32 @@
 
         <div class="gallery" id="recent"></div>
 
+        <!-- Врезка внутри Wallpaper: заливка цветом или двухцветным градиентом,
+             как альтернатива фото/видео. -->
+        <div class="tintbox">
+          <div class="tintbox-head">
+            <span class="tintbox-title">Solid or gradient</span>
+            <div class="seg seg-inline" role="tablist" aria-label="Fill type">
+              <button type="button" class="seg-btn" data-fill="solid" role="tab">Solid</button>
+              <button type="button" class="seg-btn" data-fill="gradient" role="tab">Gradient</button>
+            </div>
+          </div>
+
+          <div class="tintrow">
+            <label class="swatch-lg" title="Colour 1">
+              <input type="color" id="tintColor1">
+            </label>
+            <label class="swatch-lg" id="tintColor2Wrap" title="Colour 2">
+              <input type="color" id="tintColor2">
+            </label>
+            <div class="tint-preview" id="tintPreview"></div>
+          </div>
+          <div class="slider" id="tintAngleWrap">
+            <label for="tintAngle">Angle <output id="angleOut"></output></label>
+            <input type="range" id="tintAngle" min="0" max="360" step="5">
+          </div>
+        </div>
+
         <div class="slider">
           <label for="wallpaperDim">Darken <output id="dimOut"></output></label>
           <input type="range" id="wallpaperDim" min="0" max="80" step="5">
@@ -200,6 +225,13 @@
           <p class="hint">Click a field label to copy its technical name. Needs developer mode.</p>
         </div>
         <input type="checkbox" id="copyFieldNames" class="switch">
+      </div>
+      <div class="ctrlrow">
+        <div class="ctrl-text">
+          <span class="ctrl-label">Shell interface tweaks</span>
+          <p class="hint">On Odoo.sh's editor: adds an <code>odoo-bin shell</code> item to the menu bar, and quick "Zip folder" / "Update module" commands in the file browser.</p>
+        </div>
+        <input type="checkbox" id="shellUi" class="switch">
       </div>
     </section>
 
@@ -257,27 +289,8 @@
     <p class="libempty" id="libEmpty" hidden>Images you pick are kept here. Add one from the wallpaper section.</p>
   </section>
 
-  <!-- ===================== EDITOR ===================== -->
-  <section id="screenEditor" hidden>
-    <p class="editor-empty" id="editorEmpty">Editor not found</p>
-
-    <div class="editor-body" id="editorBody" hidden>
-      <p class="editor-state" id="editorState"></p>
-      <div class="card">
-        <div class="ctrlrow" style="border-top:0;padding-top:0">
-          <div class="ctrl-text">
-            <span class="ctrl-label">Shell interface tweaks</span>
-            <p class="hint">Adds an <code>odoo-bin shell</code> item to the editor menu bar, next to Help. It opens a fresh terminal and runs the command there.</p>
-          </div>
-          <input type="checkbox" id="shellUi" class="switch">
-        </div>
-      </div>
-      <p class="hint" id="editorResult"></p>
-    </div>
-  </section>
-
   <footer class="foot" id="foot">
-    <a class="foot-help" href="https://discord.gg/MPurJaknxf" target="_blank" rel="noopener noreferrer">
+    <a class="foot-help" href="https://discord.gg/WCe8E7ANz" target="_blank" rel="noopener noreferrer">
       <svg viewBox="0 0 16 16" aria-hidden="true"><path d="M5.5 4.5C7 3.7 8.9 3.7 10.5 4.5M4.5 11c2.3 1 4.7 1 7 0M5.7 10c-2-.6-2.7-1.4-2.7-1.4S3.7 5 5.5 4.1M10.3 10c2-.6 2.7-1.4 2.7-1.4S12.3 5 10.5 4.1M6 8.2c0 .5-.4 1-.9 1s-.9-.5-.9-1 .4-1 .9-1 .9.5.9 1M10.8 8.2c0 .5-.4 1-.9 1s-.9-.5-.9-1 .4-1 .9-1 .9.5.9 1"/></svg>
       Need help? Join our Discord
     </a>

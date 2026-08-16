@@ -71,6 +71,11 @@
     if (!settings.enabled || !profile.wallpaperEnabled) {
       return "none";
     }
+    if (profile.wallpaperKind === "color") {
+      // Non serve alcun dato esterno: una tinta o una sfumatura sono sempre
+      // disponibili una volta scelte, a differenza di un'immagine o un video.
+      return "color";
+    }
     if (profile.wallpaperKind === "video") {
       return activeVideo() ? "video" : "none";
     }
@@ -132,6 +137,24 @@
           }
         `);
       }
+    }
+
+    if (mode === "color") {
+      // Un colore o una sfumatura non ha bisogno di dati esterni: si compone
+      // qui e basta, a differenza di immagine e video.
+      const flat = profile.wallpaperColor1;
+      const gradient = `linear-gradient(${profile.wallpaperAngle}deg, ${profile.wallpaperColor1}, ${profile.wallpaperColor2})`;
+      chunks.push(`
+        body.o_home_menu_background {
+          background-image: ${profile.wallpaperGradient ? gradient : "none"} !important;
+          background-color: ${profile.wallpaperGradient ? "transparent" : flat} !important;
+          background-attachment: fixed !important;
+        }
+        body.o_home_menu_background .o_home_menu {
+          background-image: none !important;
+          background-color: transparent !important;
+        }
+      `);
     }
 
     if (mode === "video") {

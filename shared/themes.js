@@ -128,31 +128,111 @@
       label: "Ember glow",
       ring: "0 0 0 1.5px rgba(240, 134, 60, 0.8), 0 0 16px rgba(208, 68, 44, 0.55)",
     },
-    rgb: { label: "RGB (animated)", conic: true, width: 2 },
+    rgb: {
+      label: "RGB (animated)",
+      animated: true,
+      // Valore di partenza, poi animato dai keyframes. Volutamente SENZA
+      // !important: vedi la nota nella composizione qui sotto.
+      ring: "0 0 0 2px #ff0040, 0 0 12px rgba(255, 0, 64, 0.55)",
+    },
   };
 
+  /*
+   * Ogni effetto usa solo `filter` e le proprieta' indipendenti
+   * `scale`/`rotate`/`translate` (mai `background`, mai pseudo-elementi):
+   * l'icona e' un `<img>`, e gli pseudo-elementi su elementi sostituiti sono
+   * un terreno incerto tra i motori di rendering, mentre filter/scale/rotate
+   * sono garantiti. Le proprieta' indipendenti (non `transform`) servono a
+   * non annullare lo `scale()` che l'interruttore "Hide app names" applica
+   * gia' alle icone altrove.
+   */
   const EFFECTS = {
     none: { label: "None" },
+
     shadow: { label: "Soft shadow", filter: "drop-shadow(0 4px 10px rgba(0, 0, 0, 0.4))" },
+
     lifted: {
       label: "Lifted",
       filter: "drop-shadow(0 8px 18px rgba(0, 0, 0, 0.55))",
       hoverFilter: "drop-shadow(0 14px 26px rgba(0, 0, 0, 0.65))",
       hoverExtra: "translate: 0 -4px;",
     },
+
     pop: { label: "Pop on hover", hoverExtra: "scale: 1.12;" },
+
+    bounce: {
+      label: "Bounce on hover",
+      hoverAnimation: "ost-fx-bounce 0.55s cubic-bezier(.36,1.7,.4,1)",
+      keyframes: `
+        @keyframes ost-fx-bounce {
+          0%   { scale: 1 1; }
+          30%  { scale: 1.22 0.85; }
+          55%  { scale: 0.92 1.08; }
+          75%  { scale: 1.05 0.97; }
+          100% { scale: 1 1; }
+        }
+      `,
+    },
+
+    wiggle: {
+      label: "Wiggle on hover",
+      hoverAnimation: "ost-fx-wiggle 0.5s ease-in-out",
+      keyframes: `
+        @keyframes ost-fx-wiggle {
+          0%, 100% { rotate: 0deg; }
+          20%  { rotate: -9deg; }
+          40%  { rotate: 8deg; }
+          60%  { rotate: -6deg; }
+          80%  { rotate: 3deg; }
+        }
+      `,
+    },
+
+    spin: {
+      label: "Spin on hover",
+      hoverAnimation: "ost-fx-spin 0.6s ease-in-out",
+      keyframes: `@keyframes ost-fx-spin { from { rotate: 0deg; } to { rotate: 360deg; } }`,
+    },
+
     greyscale: {
-      label: "Greyscale",
+      label: "Greyscale, colour on hover",
       filter: "grayscale(1) contrast(0.95)",
       hoverFilter: "grayscale(0)",
     },
-    vivid: { label: "Vivid", filter: "saturate(1.75) contrast(1.08)" },
-    dim: { label: "Dimmed", filter: "opacity(0.55)", hoverFilter: "opacity(1)" },
-    invert: { label: "Inverted", filter: "invert(1) hue-rotate(180deg)" },
-    sepia: { label: "Sepia", filter: "sepia(0.75) saturate(1.3)" },
 
-    nightfall: { label: "Nightfall", layer: "linear-gradient(160deg, #2b3350, #0b0d12)", framed: true },
-    rgb: { label: "RGB (animated)", layer: "conic-gradient(from var(--ost-angle), #ff0040, #ff8a00, #ffee00, #22d36a, #00c2ff, #7a5cff, #ff00c8, #ff0040)", framed: true, conic: true },
+    invert: { label: "Inverted colours", filter: "invert(1) hue-rotate(180deg)" },
+
+    tint: {
+      label: "Teal wash",
+      // Nessun overlay: si desatura e si reintroduce colore con hue-rotate,
+      // lo stesso trucco delle vecchie foto virate seppia, spostato verso il
+      // teal del marchio invece dell'arancio. Funziona con il solo filter,
+      // niente livelli aggiuntivi da comporre con lo sfondo.
+      filter: "grayscale(0.6) sepia(1) saturate(4) hue-rotate(150deg) brightness(0.95)",
+      hoverFilter: "grayscale(0) sepia(0) saturate(1) hue-rotate(0deg) brightness(1)",
+    },
+
+    glow: {
+      label: "Breathing glow",
+      animation: "ost-fx-glow 2.6s ease-in-out infinite",
+      keyframes: `
+        @keyframes ost-fx-glow {
+          0%, 100% { filter: drop-shadow(0 0 2px rgba(79, 179, 184, 0.35)); }
+          50%      { filter: drop-shadow(0 0 11px rgba(79, 179, 184, 0.9)); }
+        }
+      `,
+    },
+
+    flash: {
+      label: "Flash",
+      animation: "ost-fx-flash 2.4s ease-in-out infinite",
+      keyframes: `
+        @keyframes ost-fx-flash {
+          0%, 80%, 100% { filter: brightness(1); }
+          90%            { filter: brightness(1.45); }
+        }
+      `,
+    },
   };
 
   globalThis.OST_ICON_BACKGROUNDS = BACKGROUNDS;
@@ -180,6 +260,8 @@
     const bd = BORDERS[profile.iconBorder] || BORDERS.none;
     const fx = EFFECTS[profile.iconEffect] || EFFECTS.none;
 
+    // Il disegno passa su un livello di sfondo solo quando va rimpicciolito:
+    // e' l'unico modo per non farlo ritagliare dalla curva del content box.
     const artMode = profile.iconSize !== "l";
     const basePad = bg.framed ? 5 : 0;
     const pad = basePad + (SIZE_EXTRA[profile.iconSize] || 0);
@@ -195,25 +277,8 @@
       clips.push("border-box");
       sizes.push("contain");
     }
-
-    const colorAsLayer = bd.conic && bg.color && bg.color !== "transparent";
-
     if (bg.layer) {
       images.push(bg.layer);
-      origins.push(bd.conic ? "padding-box" : "border-box");
-      clips.push(bd.conic ? "padding-box" : "border-box");
-      sizes.push("auto");
-    } else if (colorAsLayer) {
-      images.push(`linear-gradient(${bg.color}, ${bg.color})`);
-      origins.push("padding-box");
-      clips.push("padding-box");
-      sizes.push("auto");
-    }
-
-    if (bd.conic) {
-      images.push(
-        "conic-gradient(from var(--ost-angle), #ff0040, #ff8a00, #ffee00, #22d36a, #00c2ff, #7a5cff, #ff00c8, #ff0040)"
-      );
       origins.push("border-box");
       clips.push("border-box");
       sizes.push("auto");
@@ -222,9 +287,9 @@
     const decl = [
       "box-sizing: border-box !important;",
       `padding: ${pad}px !important;`,
-      bd.conic
-        ? `border: ${bd.width}px solid transparent !important;`
-        : "border: 0 !important;",
+      // Nessun bordo CSS: l'anello e' sempre e solo un box-shadow, quindi non
+      // puo' in alcun caso dipingere dietro all'icona.
+      "border: 0 !important;",
     ];
 
     if (images.length) {
@@ -237,18 +302,25 @@
     } else {
       decl.push("background-image: none !important;");
     }
+    decl.push(`background-color: ${bg.layer ? "transparent" : bg.color} !important;`);
 
-    decl.push(
-      `background-color: ${bg.layer || colorAsLayer ? "transparent" : bg.color} !important;`
-    );
-
-    decl.push(`box-shadow: ${bd.ring || "none"} !important;`);
-    decl.push(`filter: ${fx.filter || "none"} !important;`);
-
+    // Il `!important` va messo su tutti i bordi TRANNE quello animato.
+    // Le dichiarazioni !important dentro a @keyframes vengono ignorate per
+    // specifica, quindi un valore di base !important vincerebbe sempre
+    // sull'animazione e l'anello resterebbe fermo o invisibile. E' esattamente
+    // il motivo per cui l'anello RGB era sparito del tutto.
+    decl.push(`box-shadow: ${bd.ring || "none"}${bd.animated ? ";" : " !important;"}`);
+    // Stessa cosa per gli effetti che animano il filtro (Glow, Flash): se la
+    // base restasse "filter: none !important" l'animazione non riuscirebbe
+    // mai a scavalcarla.
+    const animatesFilter = !!(fx.animation || fx.hoverAnimation);
+    decl.push(`filter: ${fx.filter || "none"}${animatesFilter ? ";" : " !important;"}`);
+    if (fx.animation) {
+      decl.push(`animation: ${fx.animation};`);
+    }
     if (bg.extra) {
       decl.push(bg.extra.trim());
     }
-
     decl.push(
       "transition: background-color 0.15s ease, box-shadow 0.15s ease," +
         " filter 0.2s ease, scale 0.15s ease, translate 0.15s ease;"
@@ -260,10 +332,12 @@
     if (artMode) {
       chunks.push(`${selector} { content: url("${BLANK_PIXEL}") !important; }`);
     }
-
     chunks.push(`${selector} {\n  ${decl.join("\n  ")}\n}`);
 
+    // --- Stati al passaggio del mouse -------------------------------------
     const hoverDecl = [];
+    // `background-color`, mai lo shorthand `background`: quest'ultimo azzera
+    // anche `background-image`, dove vive il disegno in modalita' ridotta.
     if (bg.hover && !bg.layer) {
       hoverDecl.push(`background-color: ${bg.hover} !important;`);
     }
@@ -276,24 +350,44 @@
     if (fx.hoverExtra) {
       hoverDecl.push(fx.hoverExtra);
     }
+    if (fx.hoverAnimation) {
+      hoverDecl.push(`animation: ${fx.hoverAnimation};`);
+    }
     if (hoverDecl.length) {
       chunks.push(
         `${TILE}:hover ${ICON_LEAF}, ${TILE}:focus-visible ${ICON_LEAF} {\n  ${hoverDecl.join("\n  ")}\n}`
       );
     }
 
-    // Запускаем анимацию, если выбран RGB фон ИЛИ RGB обводка
-    if (bd.conic || bg.conic) {
+    // --- Keyframes dell'effetto scelto -------------------------------------
+    // Emessi solo quando servono: nessun costo per gli altri profili.
+    if (fx.keyframes) {
+      chunks.push(fx.keyframes);
       chunks.push(`
-        @property --ost-angle {
-          syntax: "<angle>";
-          initial-value: 0deg;
-          inherits: false;
-        }
-        ${selector} { animation: ost-rgb-spin 4s linear infinite; }
-        @keyframes ost-rgb-spin { to { --ost-angle: 360deg; } }
         @media (prefers-reduced-motion: reduce) {
           ${selector} { animation: none !important; }
+          ${TILE}:hover ${ICON_LEAF}, ${TILE}:focus-visible ${ICON_LEAF} { animation: none !important; }
+        }
+      `);
+    }
+
+    // --- Anello RGB animato ------------------------------------------------
+    if (bd.animated) {
+      const stops = [
+        [0, "#ff0040"], [14, "#ff8a00"], [28, "#ffee00"], [42, "#22d36a"],
+        [57, "#00c2ff"], [71, "#4b5cff"], [85, "#c840ff"], [100, "#ff0040"],
+      ];
+      // Nessun !important nei keyframes: verrebbe ignorato dal browser.
+      const frames = stops
+        .map(([pct, c]) => `          ${pct}% { box-shadow: 0 0 0 2px ${c}, 0 0 12px ${c}88; }`)
+        .join("\n");
+      chunks.push(`
+        ${selector} { animation: ost-rgb-ring 5s linear infinite; }
+        @keyframes ost-rgb-ring {
+${frames}
+        }
+        @media (prefers-reduced-motion: reduce) {
+          ${selector} { animation: none; }
         }
       `);
     }

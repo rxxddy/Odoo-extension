@@ -122,12 +122,16 @@
   /** Voce corrispondente allo sfondo attualmente applicato, se presente. */
   function activeEntry() {
     if (profile.wallpaperKind === "video") {
-      // Solo i video presi da cartella sono tracciati in galleria: quelli
-      // caricati a mano o linkati non vi compaiono affatto, coerentemente.
-      if (profile.videoSource !== "folder" || !media.videoName) {
+      // Tracciati in galleria solo i video da cartella o da caricamento
+      // diretto: quelli linkati non vi compaiono, coerentemente col fatto che
+      // un link video non passa mai dalla libreria.
+      if (
+        (profile.videoSource !== "folder" && profile.videoSource !== "file") ||
+        !media.videoName
+      ) {
         return null;
       }
-      return { source: "folder", kind: "video", name: media.videoName };
+      return { source: profile.videoSource, kind: "video", name: media.videoName };
     }
     if (profile.imageSource === "url") {
       return { source: "url", kind: "image", url: profile.imageUrl, name: profile.imageUrl };
@@ -275,7 +279,23 @@
    * disco sparisce da solo invece di restare come voce morta.
    */
   function allEntries() {
-    return library.concat(folderEntries.map(folderAsEntry));
+    const entries = library.concat(folderEntries.map(folderAsEntry));
+    // Il video caricato a mano non ha una cronologia: e' sempre e solo quello
+    // attivo in questo momento, quindi entra in galleria solo mentre lo e'.
+    if (profile.wallpaperKind === "video" && profile.videoSource === "file" && media.videoData) {
+      entries.push({
+        id: "uploaded-video",
+        source: "file",
+        kind: "video",
+        url: "",
+        data: media.videoData,
+        thumb: media.videoThumb || "",
+        name: media.videoName || "Uploaded video",
+        size: 0,
+        usedAt: Infinity,
+      });
+    }
+    return entries;
   }
 
   /** Adatta una voce di cartella alla forma usata da galleria e libreria. */
@@ -319,7 +339,10 @@
       if (entry) {
         const item = document.createElement("button");
         item.type = "button";
-        item.className = "gal-item" + ((entry.kind || "image") === "video" ? " is-video" : "");
+        item.className =
+          "gal-item" +
+          ((entry.kind || "image") === "video" ? " is-video" : "") +
+          ((entry.kind || "image") === "video" && !entry.thumb ? " no-thumb" : "");
         item.style.backgroundImage = entry.thumb ? `url("${entry.thumb}")` : "";
         item.title = entry.name || entry.url;
         item.setAttribute("aria-label", `Use ${entry.name || entry.url}`);
@@ -369,10 +392,19 @@
       media.videoData = entry.data;
       media.videoName = entry.name;
       saveMedia();
-      updateProfile({ videoSource: "folder", wallpaperKind: "video", wallpaperEnabled: true });
+      updateProfile({ videoSource: entry.source, wallpaperKind: "video", wallpaperEnabled: true });
       return;
     }
     applyEntry(entry);
+  }
+
+  /** Toglie il video attualmente caricato (non quello preso da una cartella). */
+  function clearUploadedVideo() {
+    media.videoData = "";
+    media.videoName = "";
+    media.videoThumb = "";
+    saveMedia();
+    updateProfile({ wallpaperEnabled: false });
   }
 
   /**
@@ -385,6 +417,35 @@
     el("folderName").textContent = folderName;
   }
 
+  /**
+   * Tinta unita o sfumatura: il secondo campione colore e lo slider
+   * dell'angolo si vedono solo in modalita' sfumatura. L'anteprima riusa
+   * esattamente la stessa formula del content script, per non rischiare che
+   * i due finiscano per disegnare cose leggermente diverse.
+   */
+  function renderTintBox() {
+    selectGroup(".seg-btn[data-fill]", "fill", profile.wallpaperGradient ? "gradient" : "solid");
+    el("tintColor1").value = profile.wallpaperColor1;
+    el("tintColor2").value = profile.wallpaperColor2;
+    el("tintColor2Wrap").hidden = !profile.wallpaperGradient;
+    el("tintAngleWrap").hidden = !profile.wallpaperGradient;
+    el("tintAngle").value = profile.wallpaperAngle;
+    el("angleOut").textContent = profile.wallpaperAngle + "°";
+    el("tintPreview").style.background = profile.wallpaperGradient
+      ? `linear-gradient(${profile.wallpaperAngle}deg, ${profile.wallpaperColor1}, ${profile.wallpaperColor2})`
+      : profile.wallpaperColor1;
+  }
+
+  /**
+   * Aggiorna il contenuto della cartella gia' collegata, per notare i file
+   * aggiunti dopo l'ultimo collegamento senza doverla scollegare e ricollegare.
+   *
+   * Se la maniglia e' ancora viva in questa stessa apertura del popup, la si
+   * rilegge direttamente. Se invece si e' aperto un nuovo popup nel frattempo
+   * la maniglia non c'e' piu' — di proposito, per non richiedere il permesso
+   * ad ogni progetto — quindi tocca semplicemente ripetere la scelta della
+   * cartella, esattamente come "Link a folder".
+   */
   async function syncFolder() {
     if (folderHandle) {
       await readFolder();
@@ -396,6 +457,7 @@
 
   function unlinkFolder() {
     folderHandle = null;
+    folderLinked = false;
     folderName = "";
     folderEntries = [];
     idbDelete(FOLDER_KEY);
@@ -420,6 +482,9 @@
       item.setAttribute("aria-current", String(isSameEntry(entry, active)));
 
       item.classList.toggle("is-video", (entry.kind || "image") === "video");
+      // Un video da cartella ha davvero la miniatura del primo fotogramma:
+      // il riempimento scuro va mostrato solo quando manca del tutto.
+      item.classList.toggle("no-thumb", (entry.kind || "image") === "video" && !entry.thumb);
 
       const pick = document.createElement("button");
       pick.type = "button";
@@ -437,9 +502,23 @@
 
       // Una voce da cartella locale non ha nulla da "eliminare": il file
       // resta sul disco dell'utente. Il cestino qui sparisce del tutto,
-      // com'e' stato chiesto esplicitamente, invece di restare presente ma
-      // inutile.
-      if (entry.source !== "folder") {
+      // com'e' stato chiesto esplicitamente. Il video caricato a mano, al
+      // contrario, e' l'unico caso in cui "eliminare" ha senso: non c'e' una
+      // cronologia sotto a cui tornare, quindi il cestino svuota lo sfondo
+      // invece di togliere una voce da un elenco.
+      if (entry.id === "uploaded-video") {
+        const del = document.createElement("button");
+        del.type = "button";
+        del.className = "lib-del";
+        del.innerHTML = TRASH_SVG;
+        del.setAttribute("aria-label", "Remove uploaded video");
+        del.title = "Remove uploaded video";
+        del.addEventListener("click", (e) => {
+          e.stopPropagation();
+          clearUploadedVideo();
+        });
+        item.appendChild(del);
+      } else if (entry.source !== "folder") {
         const del = document.createElement("button");
         del.type = "button";
         del.className = "lib-del";
@@ -484,6 +563,7 @@
     // Il campo del link non conserva l'indirizzo gia' applicato: una volta
     // aggiunto lo sfondo il campo torna vuoto, pronto per il prossimo.
     renderFolderBar();
+    renderTintBox();
 
     const dim = Math.round(profile.wallpaperDim * 100);
     el("wallpaperDim").value = dim;
@@ -630,64 +710,17 @@
     el("screenAppearance").hidden = name !== "appearance";
     el("screenDeveloper").hidden = name !== "developer";
     el("screenLibrary").hidden = name !== "library";
-    el("screenEditor").hidden = name !== "editor";
     // La libreria e' un approfondimento dell'aspetto: la scheda in alto resta
     // "Appearance", altrimenti sembrerebbe di aver cambiato sezione.
     const tab = name === "library" ? "appearance" : name;
     for (const btn of document.querySelectorAll(".tab")) {
       btn.setAttribute("aria-selected", String(btn.dataset.screen === tab));
     }
-    // Azzerare tutto da una schermata che non mostra quelle impostazioni
-    // sarebbe poco chiaro: il piede resta legato alle impostazioni.
-    el("foot").hidden = name === "editor";
 
     if (name === "library") {
       renderLibrary();
       el("libBack").focus();
     }
-    if (name === "editor") {
-      refreshEditor();
-    }
-  }
-
-  // ------------------------------------------------------------------
-  // Editor di Odoo.sh
-  // ------------------------------------------------------------------
-
-  /** Interroga la scheda attiva; l'assenza di risposta vale come "non trovato". */
-  function askEditor(message) {
-    return new Promise((resolve) => {
-      if (activeTabId === null) {
-        resolve(null);
-        return;
-      }
-      chrome.tabs.sendMessage(activeTabId, message, (response) => {
-        resolve(chrome.runtime.lastError ? null : response || null);
-      });
-    });
-  }
-
-  async function refreshEditor() {
-    const status = await askEditor({ type: "ost:editor-status" });
-    const found = !!(status && status.found);
-
-    el("editorEmpty").hidden = found;
-    el("editorBody").hidden = !found;
-    el("editorResult").textContent = "";
-    if (!found) {
-      return;
-    }
-
-    // La voce di menu apre da sola un terminale quando serve, quindi qui si
-    // riporta solo lo stato, senza piu' bloccare nulla.
-    const ready = !!status.terminalActive;
-    const state = el("editorState");
-    state.classList.toggle("ready", ready);
-    state.textContent = ready
-      ? `Editor connected — terminal open${status.tabLabel ? ` (${status.tabLabel})` : ""}`
-      : "Editor connected — no terminal open yet";
-
-
   }
 
   // ------------------------------------------------------------------
@@ -802,8 +835,12 @@
     }
     note.textContent = "Storing video…";
     try {
-      media.videoData = await readAsDataUrl(file);
+      const data = await readAsDataUrl(file);
+      media.videoData = data;
       media.videoName = file.name;
+      // Un video caricato non ha una cronologia da cui pescare un'anteprima
+      // come quelli di cartella: va generata qui, sul primo fotogramma.
+      media.videoThumb = await videoFirstFrame(data);
       saveMedia();
       updateProfile({ videoSource: "file", wallpaperKind: "video", wallpaperEnabled: true });
     } catch (err) {
@@ -921,6 +958,46 @@
    * il permesso sulla cartella serve solo nel momento in cui la si collega o
    * la si aggiorna, non per guardare le foto gia' lette.
    */
+  /**
+   * Estrae il primo fotogramma di un video come miniatura. Si carica in un
+   * elemento <video> fuori pagina e si disegna su un canvas non appena c'e'
+   * un fotogramma disponibile: non serve cercare un istante preciso, il primo
+   * che arriva e' gia' quello giusto per un video appena iniziato.
+   */
+  function videoFirstFrame(dataUrl) {
+    return new Promise((resolve) => {
+      const video = document.createElement("video");
+      video.muted = true;
+      video.playsInline = true;
+      video.preload = "auto";
+
+      const finish = (result) => {
+        video.remove();
+        resolve(result);
+      };
+
+      video.addEventListener(
+        "loadeddata",
+        () => {
+          try {
+            const w = 320;
+            const h = Math.round(w * ((video.videoHeight || 9) / (video.videoWidth || 16)));
+            const canvas = document.createElement("canvas");
+            canvas.width = w;
+            canvas.height = h;
+            canvas.getContext("2d").drawImage(video, 0, 0, w, h);
+            finish(canvas.toDataURL("image/jpeg", 0.7));
+          } catch (err) {
+            finish("");
+          }
+        },
+        { once: true }
+      );
+      video.addEventListener("error", () => finish(""), { once: true });
+      video.src = dataUrl;
+    });
+  }
+
   async function readFolder() {
     const note = el("folderNote");
     if (!folderHandle) {
@@ -930,6 +1007,8 @@
     note.textContent = "Reading folder…";
 
     try {
+      // FileSystemDirectoryHandle e' un iterabile "map-like": `.entries()` da'
+      // le coppie [nome, handle], mentre `.values()` darebbe i soli handle.
       for await (const [name, handle] of folderHandle.entries()) {
         if (handle.kind !== "file" || folderEntries.length >= FOLDER_LIMIT) {
           continue;
@@ -952,14 +1031,18 @@
               usedAt: 0,
             });
           } else {
+            // Stesso limite di peso di un caricamento manuale: incorporare un
+            // video enorme come data URL appesantirebbe la cache ad ogni
+            // apertura del popup su qualunque progetto.
             if (file.size > globalThis.OST_MAX_VIDEO_BYTES) {
               continue;
             }
+            const data = await readAsDataUrl(file);
             folderEntries.push({
               name,
               kind: "video",
-              data: await readAsDataUrl(file),
-              thumbUrl: "",
+              data,
+              thumbUrl: await videoFirstFrame(data),
               usedAt: 0,
             });
           }
@@ -1109,6 +1192,20 @@
     });
     el("pickFolder").addEventListener("click", () => pickFolder());
     el("syncFolder").addEventListener("click", syncFolder);
+
+    // Qualunque controllo della tinta imposta subito lo sfondo su "colore":
+    // e' un terzo tipo di sfondo a se', non un ritocco su immagine o video.
+    function applyTint(patch) {
+      updateProfile(Object.assign({ wallpaperKind: "color", wallpaperEnabled: true }, patch));
+    }
+    for (const btn of document.querySelectorAll(".seg-btn[data-fill]")) {
+      btn.addEventListener("click", () =>
+        applyTint({ wallpaperGradient: btn.dataset.fill === "gradient" })
+      );
+    }
+    el("tintColor1").addEventListener("input", (e) => applyTint({ wallpaperColor1: e.target.value }));
+    el("tintColor2").addEventListener("input", (e) => applyTint({ wallpaperColor2: e.target.value }));
+    el("tintAngle").addEventListener("input", (e) => applyTint({ wallpaperAngle: Number(e.target.value) }));
     el("unlinkFolder").addEventListener("click", unlinkFolder);
 
     el("libBack").addEventListener("click", () => showScreen("appearance"));

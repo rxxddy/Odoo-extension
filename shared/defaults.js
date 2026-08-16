@@ -96,19 +96,19 @@
   globalThis.OST_LABEL_MODES = ["auto", "light", "dark"];
   globalThis.OST_ICON_SIZES = ["l", "m", "s"];
   globalThis.OST_CORNERS = ["tl", "tr", "bl", "br"];
-  globalThis.OST_SCREENS = ["appearance", "developer", "editor"];
+  globalThis.OST_SCREENS = ["appearance", "developer"];
 
   // Combinazioni valide del costruttore icone.
   globalThis.OST_BG_KEYS = [
     "none", "glass", "smoke", "dark", "black", "light", "white", "paper",
     "aubergine", "teal", "aurora", "sunset", "ocean", "nightfall",
-    "aubergine", "teal", "aurora", "sunset", "ocean", "nightfall", "rgb",
   ];
   globalThis.OST_BORDER_KEYS = [
     "none", "hairline", "dark", "thick", "double", "glow", "halo", "ember", "rgb",
   ];
   globalThis.OST_EFFECT_KEYS = [
-    "none", "shadow", "lifted", "pop", "greyscale", "vivid", "dim", "invert", "sepia",
+    "none", "shadow", "lifted", "pop", "bounce", "wiggle", "spin",
+    "greyscale", "invert", "tint", "glow", "flash",
   ];
 
   /**
@@ -186,6 +186,12 @@
     videoUrl: "",
     wallpaperDim: 0.25,
     wallpaperBlur: 0,
+    // Sfondo a tinta unita o sfumatura a due colori: un terzo tipo di sfondo,
+    // indipendente da immagine e video.
+    wallpaperColor1: "#242733",
+    wallpaperColor2: "#017e84",
+    wallpaperGradient: false,
+    wallpaperAngle: 135,
     // Esclusione della targhetta, decisa dominio per dominio.
     badgeHidden: false,
   };
@@ -194,6 +200,9 @@
     imageData: "",
     videoData: "",
     videoName: "",
+    // Prima immagine del video caricato a mano: senza cronologia da cui
+    // pescarla come per i video di cartella, va generata e conservata qui.
+    videoThumb: "",
   };
 
   /**
@@ -279,9 +288,17 @@
     if (!globalThis.OST_ICON_SIZES.includes(p.iconSize)) {
       p.iconSize = "l";
     }
-    p.wallpaperKind = p.wallpaperKind === "video" ? "video" : "image";
+    p.wallpaperKind = ["video", "color"].includes(p.wallpaperKind) ? p.wallpaperKind : "image";
     p.wallpaperDim = Math.min(0.8, Math.max(0, Number(p.wallpaperDim) || 0));
     p.wallpaperBlur = Math.min(24, Math.max(0, Number(p.wallpaperBlur) || 0));
+    if (!/^#[0-9a-f]{6}$/i.test(String(p.wallpaperColor1))) {
+      p.wallpaperColor1 = globalThis.OST_PROFILE_DEFAULTS.wallpaperColor1;
+    }
+    if (!/^#[0-9a-f]{6}$/i.test(String(p.wallpaperColor2))) {
+      p.wallpaperColor2 = globalThis.OST_PROFILE_DEFAULTS.wallpaperColor2;
+    }
+    p.wallpaperGradient = !!p.wallpaperGradient;
+    p.wallpaperAngle = ((Math.round(Number(p.wallpaperAngle)) % 360) + 360) % 360;
     p.iconRadius = Math.min(34, Math.max(0, Number(p.iconRadius) || 0));
 
     for (const key of Object.keys(p)) {

@@ -365,6 +365,54 @@ input[type="range"]::-webkit-slider-thumb {
 /* --- Cartella collegata --- */
 .folderbar { display: flex; gap: 8px; align-items: center; }
 
+/* --- Tinta unita o sfumatura: riquadro distinto dentro Wallpaper --- */
+.tintbox {
+  padding: 11px 12px;
+  border: 1px solid var(--line);
+  border-radius: 12px;
+  background: var(--surface-sunk);
+  display: grid;
+  gap: 10px;
+}
+
+.tintbox-head { display: flex; align-items: center; justify-content: space-between; gap: 10px; }
+.tintbox-title { font-weight: 500; font-size: 12px; }
+
+.tintrow { display: flex; align-items: center; gap: 8px; }
+
+.swatch-lg {
+  position: relative;
+  flex: none;
+  width: 34px;
+  height: 34px;
+  border-radius: 9px;
+  border: 1px solid var(--line);
+  overflow: hidden;
+  cursor: pointer;
+  background: var(--card);
+}
+
+.swatch-lg[hidden] { display: none; }
+
+.swatch-lg input[type="color"] {
+  position: absolute;
+  inset: -4px;
+  width: calc(100% + 8px);
+  height: calc(100% + 8px);
+  padding: 0;
+  border: 0;
+  background: none;
+  cursor: pointer;
+}
+
+.tint-preview {
+  flex: 1;
+  height: 34px;
+  border-radius: 9px;
+  border: 1px solid var(--line);
+  /* Il colore vero si imposta via JS: qui solo la cornice. */
+}
+
 .folderchip {
   flex: 1;
   min-width: 0;
@@ -414,6 +462,10 @@ input[type="range"]::-webkit-slider-thumb {
 .chip-x:hover { background: #a32d2d; color: #fff; }
 .chip-x svg { width: 11px; height: 11px; fill: none; stroke: currentColor; stroke-width: 1.6; stroke-linecap: round; }
 
+/* Il pulsante di sincronizzazione non deve confondersi con quello di
+   scollegamento: colore diverso al passaggio del mouse. */
+.chip-sync:hover { background: var(--brand); }
+
 /* --- Galleria compatta: quattro sfondi recenti piu' il collegamento --- */
 .gallery { display: grid; grid-template-columns: repeat(5, 1fr); gap: 7px; }
 
@@ -458,10 +510,12 @@ input[type="range"]::-webkit-slider-thumb {
 
 .gal-origin svg { width: 10px; height: 10px; fill: none; stroke: currentColor; stroke-width: 1.6; stroke-linecap: round; stroke-linejoin: round; }
 
-/* Sfondo scuro fisso per i video di cartella: non hanno una miniatura reale,
-   quindi senza questo sembrerebbero un'immagine rotta invece di uno slot video. */
-.gal-item.is-video,
-.lib-item.is-video {
+/* Sfondo scuro di riserva, solo quando manca davvero una miniatura (video
+   caricato a mano, senza cronologia da cui pescare il primo fotogramma). Un
+   video da cartella ha invece una vera anteprima e non deve riceverlo,
+   altrimenti la coprirebbe sempre. */
+.gal-item.is-video.no-thumb,
+.lib-item.is-video.no-thumb {
   background-image: none !important;
   background: linear-gradient(150deg, #2b3350, #0b0d12);
 }
@@ -469,8 +523,8 @@ input[type="range"]::-webkit-slider-thumb {
 /* Seconda icona, riservata al tipo "video": si affianca a quella di
    provenienza nell'angolo opposto, mai a scapito del cestino (che sui video
    di cartella non compare comunque). */
-.gal-kind { left: auto; right: 4px; }
-.lib-kind { left: auto; right: 5px; }
+.gal-kind { left: auto !important; right: 4px !important; }
+.lib-kind { left: auto !important; right: 5px !important; }
 
 /* --- Libreria --- */
 .libhead {
