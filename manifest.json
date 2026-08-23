@@ -1,8 +1,10 @@
 {
   "manifest_version": 3,
-  "name": "UI Enhancer for Odoo",
-  "version": "1.4.0",
-  "description": "Hide the Odoo.sh trial banner, open in developer mode, and restyle the app drawer with themes and an image or video wallpaper.",
+  "default_locale": "en",
+  "name": "__MSG_appName__",
+  "version": "1.6.0",
+  "description": "__MSG_appDesc__",
+  "author": "Weden <wedendev@gmail.com>",
   "permissions": [
     "storage",
     "unlimitedStorage",
@@ -14,7 +16,7 @@
     "*://*.odoo.sh/*"
   ],
   "action": {
-    "default_title": "UI Enhancer for Odoo",
+    "default_title": "__MSG_appName__",
     "default_popup": "popup/popup.html",
     "default_icon": {
       "16": "icons/icon16.png",

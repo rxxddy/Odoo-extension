@@ -225,14 +225,19 @@
       chunks.push(globalThis.ostBadgeCss(settings, currentEnv));
     }
 
-    // Sfondo, bordo, effetto e misura del disegno nascono da un'unica
-    // funzione: finiscono tutti nelle stesse proprieta' CSS, quindi generarli
-    // separatamente li farebbe sovrascrivere a vicenda.
-    chunks.push(globalThis.ostIconCss(profile));
-    chunks.push(globalThis.ostLabelCss(profile.labelColor));
+    // Sfondo, bordo, effetto, misura del disegno, colore delle didascalie e
+    // l'interruttore per nasconderle: tutto il blocco "App icons" dipende da
+    // un solo interruttore. Spento (il valore di fabbrica), non si genera
+    // nemmeno una riga di CSS per le icone: e' la garanzia piu' forte che le
+    // icone di Odoo restino esattamente come sono finche' l'utente non
+    // accende lui stesso il blocco.
+    if (profile.iconsEnabled) {
+      chunks.push(globalThis.ostIconCss(profile));
+      chunks.push(globalThis.ostLabelCss(profile.labelColor));
 
-    if (profile.hideAppNames) {
-      chunks.push(globalThis.ostNoLabelsCss());
+      if (profile.hideAppNames) {
+        chunks.push(globalThis.ostNoLabelsCss());
+      }
     }
 
     if (settings.copyFieldNames) {
@@ -249,7 +254,7 @@
       `);
     }
 
-    if (profile.roundIconsEnabled) {
+    if (profile.iconsEnabled && profile.roundIconsEnabled) {
       const r = Number(profile.iconRadius) || 0;
       chunks.push(`
         body.o_home_menu_background .o_app_icon,
@@ -565,7 +570,7 @@
    * che molti preferiscono tenere sotto gli occhi.
    */
   function hideNeutralizeBanner() {
-    if (!settings.enabled || !settings.hideNeutralizeBanner || !document.body) {
+    if (!settings.enabled || !profile.hideNeutralizeBanner || !document.body) {
       return;
     }
     const el = document.getElementById("oe_neutralize_banner");
@@ -578,7 +583,7 @@
   }
 
   function hideTrialBanners() {
-    if (!settings.enabled || !settings.hideTrialBanner || !document.body) {
+    if (!settings.enabled || !profile.hideTrialBanner || !document.body) {
       return;
     }
     const candidates = document.querySelectorAll(
@@ -608,8 +613,8 @@
     if (!document.body) {
       return;
     }
-    const keepTrial = settings.enabled && settings.hideTrialBanner;
-    const keepNeutralize = settings.enabled && settings.hideNeutralizeBanner;
+    const keepTrial = settings.enabled && profile.hideTrialBanner;
+    const keepNeutralize = settings.enabled && profile.hideNeutralizeBanner;
 
     for (const el of document.querySelectorAll('[data-ost-hidden="1"]')) {
       const isNeutralize = el.id === "oe_neutralize_banner" || el.querySelector("#oe_neutralize_banner");
@@ -819,7 +824,7 @@
    * all'attributo `src`, che restano di Odoo.
    */
   function applyIconArtwork() {
-    const wanted = settings.enabled && profile.iconSize !== "l";
+    const wanted = settings.enabled && profile.iconsEnabled && profile.iconSize !== "l";
 
     for (const icon of document.querySelectorAll(".o_apps .o_app_icon")) {
       const marked = icon.classList.contains("ost-art");
@@ -1375,13 +1380,13 @@
       injectBridge();
     }
     applyEditorMenu();
-    if (settings.enabled && (settings.hideTrialBanner || settings.hideNeutralizeBanner)) {
+    if (settings.enabled && (profile.hideTrialBanner || profile.hideNeutralizeBanner)) {
       hideTrialBanners();
       hideNeutralizeBanner();
     }
     // Cio' che l'utente ha appena disattivato torna visibile subito, senza
     // dover ricaricare la pagina.
-    if (!settings.enabled || !settings.hideTrialBanner || !settings.hideNeutralizeBanner) {
+    if (!settings.enabled || !profile.hideTrialBanner || !profile.hideNeutralizeBanner) {
       restoreHiddenBanners();
     }
     startObservers();
@@ -1400,34 +1405,23 @@
   }
 
   const PROFILE_KEY = globalThis.ostProfileKey(HOST);
-  const DEFAULT_PROFILE_KEY = globalThis.ostProfileKey(globalThis.OST_DEFAULT_HOST);
   const MEDIA_KEY = globalThis.ostMediaKey(HOST);
-  const DEFAULT_MEDIA_KEY = globalThis.ostMediaKey(globalThis.OST_DEFAULT_HOST);
 
   /**
-   * Il record piatto della v0.4 fa da ultimo ripiego: finche' il popup non ha
-   * scritto i profili nuovi, l'aspetto scelto in precedenza continua a valere.
+   * Nessun ripiego su un profilo condiviso "*": un dominio mai personalizzato
+   * deve ricevere esattamente i valori di fabbrica (tutto spento, icone
+   * intatte), non l'aspetto scelto per un altro progetto. Il ripiego che
+   * c'era prima era esattamente il motivo per cui un progetto aperto per la
+   * prima volta arrivava gia' con sfondo e icone modificati.
    */
   function readState(record) {
-    const legacy = record[globalThis.OST_KEY_SETTINGS];
-    settings = globalThis.ostNormalizeGlobal(legacy);
-    profile = globalThis.ostNormalizeProfile(
-      record[PROFILE_KEY] || record[DEFAULT_PROFILE_KEY] || legacy
-    );
-    media = globalThis.ostNormalizeMedia(
-      record[MEDIA_KEY] || record[DEFAULT_MEDIA_KEY] || record[globalThis.OST_LEGACY_MEDIA]
-    );
+    settings = globalThis.ostNormalizeGlobal(record[globalThis.OST_KEY_SETTINGS]);
+    profile = globalThis.ostNormalizeProfile(record[PROFILE_KEY]);
+    media = globalThis.ostNormalizeMedia(record[MEDIA_KEY]);
   }
 
   chrome.storage.local.get(
-    [
-      globalThis.OST_KEY_SETTINGS,
-      PROFILE_KEY,
-      DEFAULT_PROFILE_KEY,
-      MEDIA_KEY,
-      DEFAULT_MEDIA_KEY,
-      globalThis.OST_LEGACY_MEDIA,
-    ],
+    [globalThis.OST_KEY_SETTINGS, PROFILE_KEY, MEDIA_KEY],
     (record) => {
       readState(record || {});
       applyCss();
@@ -1447,14 +1441,9 @@
     }
     // Solo le chiavi che riguardano questo dominio: le personalizzazioni degli
     // altri progetti non devono far ridisegnare nulla qui.
-    const relevant = [
-      globalThis.OST_KEY_SETTINGS,
-      PROFILE_KEY,
-      DEFAULT_PROFILE_KEY,
-      MEDIA_KEY,
-      DEFAULT_MEDIA_KEY,
-      globalThis.OST_LEGACY_MEDIA,
-    ].filter((key) => key in changes);
+    const relevant = [globalThis.OST_KEY_SETTINGS, PROFILE_KEY, MEDIA_KEY].filter(
+      (key) => key in changes
+    );
 
     if (!relevant.length) {
       return;
@@ -1464,14 +1453,7 @@
     const beforeMedia = activeVideo();
 
     chrome.storage.local.get(
-      [
-        globalThis.OST_KEY_SETTINGS,
-        PROFILE_KEY,
-        DEFAULT_PROFILE_KEY,
-        MEDIA_KEY,
-        DEFAULT_MEDIA_KEY,
-        globalThis.OST_LEGACY_MEDIA,
-      ],
+      [globalThis.OST_KEY_SETTINGS, PROFILE_KEY, MEDIA_KEY],
       (record) => {
         readState(record || {});
 

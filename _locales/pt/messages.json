@@ -1,0 +1,10 @@
+{
+  "appName": {
+    "message": "UI Enhancer for Odoo",
+    "description": "The extension's name, shown in chrome://extensions, the toolbar tooltip, and the Chrome Web Store listing."
+  },
+  "appDesc": {
+    "message": "Oculta o banner de teste do Odoo.sh, abre em modo de programador e personaliza o painel de aplicações com temas e um fundo de foto ou vídeo.",
+    "description": "The one-line description shown under the extension's name."
+  }
+}

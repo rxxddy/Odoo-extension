@@ -3,41 +3,52 @@
 <head>
   <meta charset="utf-8">
   <link rel="stylesheet" href="popup.css">
-  <title>UI Enhancer for Odoo</title>
+  <title data-i18n="meta.title">UI Enhancer for Odoo</title>
 </head>
 <body>
   <header class="head">
     <div class="head-row">
       <img src="/icons/icon128.png" class="mark" alt="Logo" aria-hidden="true">
       <h1>UI Enhancer for Odoo <span class="badge-beta">BETA</span></h1>
-      <button type="button" class="pro-chip" id="proChip" title="View your PRO status">PRO</button>
-      <img src="/icons/user.png" class="avatar" alt="Account" id="userAvatar">
+      <button type="button" class="pro-chip" id="proChip" data-i18n-title="pro.chip.title" data-i18n="pro.label">PRO</button>
+      <img src="/icons/user.png" class="avatar" data-i18n-alt="header.account.alt" alt="Account" id="userAvatar">
     </div>
   </header>
 
   <nav class="tabs" role="tablist" aria-label="Sections">
-    <button type="button" class="tab" data-screen="appearance" role="tab">Appearance</button>
-    <button type="button" class="tab" data-screen="developer" role="tab">Developer</button>
+    <button type="button" class="tab" data-screen="appearance" role="tab" data-i18n="tabs.appearance">Appearance</button>
+    <button type="button" class="tab" data-screen="developer" role="tab" data-i18n="tabs.developer">Developer</button>
+
+    <!-- Selettore lingua personalizzato, con bandiera: un <select> nativo non
+         permette di disegnare le bandiere accanto al nome. -->
+    <div class="langpick" id="langPick">
+      <button type="button" class="langpick-btn" id="langBtn" data-i18n-title="tabs.language.title" aria-haspopup="listbox" aria-expanded="false">
+        <span id="langFlag">🇬🇧</span>
+        <svg viewBox="0 0 16 16" aria-hidden="true"><path d="M4 6.5 8 10.5 12 6.5"/></svg>
+      </button>
+      <ul class="langpick-list" id="langList" role="listbox" hidden></ul>
+    </div>
+
     <div class="tabs-spacer"></div>
     <p class="dbchip" id="dbchip">
       <svg viewBox="0 0 16 16" aria-hidden="true"><ellipse cx="8" cy="3.4" rx="5.4" ry="2.2"/><path d="M2.6 3.4v9.2c0 1.2 2.4 2.2 5.4 2.2s5.4-1 5.4-2.2V3.4"/><path d="M2.6 8c0 1.2 2.4 2.2 5.4 2.2s5.4-1 5.4-2.2"/></svg>
       <span id="dbname">no Odoo page</span>
     </p>
-    <button type="button" class="iconbtn" id="copyDb" aria-label="Copy database name" title="Copy database name">
+    <button type="button" class="iconbtn" id="copyDb" data-i18n-aria-label="header.db.copy" data-i18n-title="header.db.copy" aria-label="Copy database name" title="Copy database name">
       <svg viewBox="0 0 16 16" aria-hidden="true"><rect x="5.5" y="5.5" width="8" height="9" rx="1.5"/><path d="M10.5 3.5v-1a1 1 0 0 0-1-1h-6a1 1 0 0 0-1 1v7a1 1 0 0 0 1 1h1"/></svg>
     </button>
-    <input type="checkbox" id="enabled" class="switch" aria-label="Enable the extension" title="Turn everything on or off">
+    <input type="checkbox" id="enabled" class="switch" data-i18n-aria-label="header.enabled.aria" data-i18n-title="header.enabled.title" aria-label="Enable the extension" title="Turn everything on or off">
   </nav>
 
   <!-- ===================== BENVENUTO PRO ===================== -->
   <div class="pro-overlay" id="proOverlay" hidden>
     <div class="pro-modal">
       <div class="pro-modal-badge">PRO</div>
-      <h2>Welcome aboard, beta tester!</h2>
-      <p>Thank you for helping us test the extension. As a thank-you, we're gifting you a <strong>PRO subscription</strong> for as long as the beta lasts — completely free.</p>
-      <p class="pro-note">A PRO feature switches on with this colour instead of the usual one — that's how you'll spot it.</p>
-      <p class="pro-fine">*We'll give you at least 30 days' notice before the beta, and this subscription, ever ends.</p>
-      <button type="button" class="btn btn-accent pro-modal-btn" id="proUnderstood">I understood</button>
+      <h2 data-i18n="pro.modal.title">Welcome aboard, beta tester!</h2>
+      <p data-i18n-html="pro.modal.body">Thank you for helping us test the extension. As a thank-you, we're gifting you a <strong>PRO subscription</strong> for as long as the beta lasts — completely free.</p>
+      <p class="pro-note" data-i18n="pro.modal.note">A PRO feature switches on with this colour instead of the usual one — that's how you'll spot it.</p>
+      <p class="pro-fine" data-i18n="pro.modal.fine">*We'll give you at least 30 days' notice before the beta, and this subscription, ever ends.</p>
+      <button type="button" class="btn btn-accent pro-modal-btn" id="proUnderstood" data-i18n="pro.modal.button">I understood</button>
     </div>
   </div>
 
@@ -47,91 +58,94 @@
     <!-- Mostrato solo fuori da *.odoo.com/*.odoo.sh: li' il content script
          parte gia' da solo, offrire il pulsante sarebbe ridondante. -->
     <div class="card recognize" id="recognizeBanner" hidden>
-      <p class="hint">This page wasn't detected as Odoo. Is it one?</p>
-      <button type="button" class="btn btn-accent" id="recognizeBtn">Enable here</button>
+      <p class="hint" data-i18n="recognize.hint">This page wasn't detected as Odoo. Is it one?</p>
+      <button type="button" class="btn btn-accent" id="recognizeBtn" data-i18n="recognize.button">Enable here</button>
     </div>
 
     <!-- ---------- Costruttore icone ---------- -->
     <section class="card">
       <div class="card-head">
-        <h2>App icons</h2>
+        <h2 data-i18n="icons.title">App icons</h2>
         <p class="scope" id="scopeNote"></p>
+        <input type="checkbox" id="iconsEnabled" class="switch">
       </div>
 
-      <div class="builder">
-        <div class="builder-preview">
-          <div class="iconpreview" id="iconPreview"><span class="iconpreview-art"></span></div>
-          <span class="iconpreview-caption" id="iconPreviewCaption">Sales</span>
+      <div class="sub" id="iconsPanel">
+        <div class="builder">
+          <div class="builder-preview">
+            <div class="iconpreview" id="iconPreview"><span class="iconpreview-art"></span></div>
+            <span class="iconpreview-caption" id="iconPreviewCaption" data-i18n="icons.preview.caption">Sales</span>
+          </div>
+
+          <div class="builder-controls">
+            <label class="field">
+              <span class="field-label" data-i18n="icons.field.background">Background</span>
+              <select id="iconBackground" class="select"></select>
+            </label>
+            <label class="field">
+              <span class="field-label" data-i18n="icons.field.border">Border</span>
+              <select id="iconBorder" class="select"></select>
+            </label>
+            <label class="field">
+              <span class="field-label" data-i18n="icons.field.effect">Effect</span>
+              <select id="iconEffect" class="select"></select>
+            </label>
+          </div>
         </div>
 
-        <div class="builder-controls">
-          <label class="field">
-            <span class="field-label">Background</span>
-            <select id="iconBackground" class="select"></select>
-          </label>
-          <label class="field">
-            <span class="field-label">Border</span>
-            <select id="iconBorder" class="select"></select>
-          </label>
-          <label class="field">
-            <span class="field-label">Effect</span>
-            <select id="iconEffect" class="select"></select>
-          </label>
+        <div class="ctrlrow">
+          <span class="ctrl-label" id="iconSizeLabel" data-i18n="icons.size.label">Artwork size</span>
+          <div class="seg seg-icons" role="tablist" aria-labelledby="iconSizeLabel">
+            <button type="button" class="seg-btn" data-iconsize="l" role="tab" data-i18n-title="icons.size.large" title="Large">
+              <svg viewBox="0 0 20 20" aria-hidden="true"><rect x="2.5" y="2.5" width="15" height="15" rx="4"/></svg>
+            </button>
+            <button type="button" class="seg-btn" data-iconsize="m" role="tab" data-i18n-title="icons.size.medium" title="Medium">
+              <svg viewBox="0 0 20 20" aria-hidden="true"><rect x="4.5" y="4.5" width="11" height="11" rx="3"/></svg>
+            </button>
+            <button type="button" class="seg-btn" data-iconsize="s" role="tab" data-i18n-title="icons.size.small" title="Small">
+              <svg viewBox="0 0 20 20" aria-hidden="true"><rect x="6.5" y="6.5" width="7" height="7" rx="2"/></svg>
+            </button>
+          </div>
         </div>
-      </div>
 
-      <div class="ctrlrow">
-        <span class="ctrl-label" id="iconSizeLabel">Artwork size</span>
-        <div class="seg seg-icons" role="tablist" aria-labelledby="iconSizeLabel">
-          <button type="button" class="seg-btn" data-iconsize="l" role="tab" title="Large">
-            <svg viewBox="0 0 20 20" aria-hidden="true"><rect x="2.5" y="2.5" width="15" height="15" rx="4"/></svg>
-          </button>
-          <button type="button" class="seg-btn" data-iconsize="m" role="tab" title="Medium">
-            <svg viewBox="0 0 20 20" aria-hidden="true"><rect x="4.5" y="4.5" width="11" height="11" rx="3"/></svg>
-          </button>
-          <button type="button" class="seg-btn" data-iconsize="s" role="tab" title="Small">
-            <svg viewBox="0 0 20 20" aria-hidden="true"><rect x="6.5" y="6.5" width="7" height="7" rx="2"/></svg>
-          </button>
+        <div class="ctrlrow">
+          <span class="ctrl-label" id="radiusLabel" data-i18n="icons.corners.label">Corners</span>
+          <div class="rangewrap">
+            <input type="range" id="iconRadius" min="0" max="34" step="1" aria-labelledby="radiusLabel">
+            <output id="radiusOut"></output>
+          </div>
+          <input type="checkbox" id="roundIconsEnabled" class="switch" data-i18n-aria-label="icons.corners.aria" aria-label="Enable rounded corners">
         </div>
-      </div>
 
-      <div class="ctrlrow">
-        <span class="ctrl-label" id="radiusLabel">Corners</span>
-        <div class="rangewrap">
-          <input type="range" id="iconRadius" min="0" max="34" step="1" aria-labelledby="radiusLabel">
-          <output id="radiusOut"></output>
+        <div class="ctrlrow">
+          <span class="ctrl-label" id="labelLabel" data-i18n="icons.labeltheme.label">Label theme</span>
+          <div class="seg seg-icons" role="tablist" aria-labelledby="labelLabel">
+            <button type="button" class="seg-btn" data-label="auto" role="tab" data-i18n-title="icons.labeltheme.auto" title="Auto — leave Odoo's own colours">
+              <svg viewBox="0 0 20 20" aria-hidden="true"><path d="M10 3.5a6.5 6.5 0 0 0 0 13z" fill="currentColor" stroke="none"/><circle cx="10" cy="10" r="6.5"/></svg>
+            </button>
+            <button type="button" class="seg-btn" data-label="light" role="tab" data-i18n-title="icons.labeltheme.light" title="Light text — for dark wallpapers">
+              <svg viewBox="0 0 20 20" aria-hidden="true"><circle cx="10" cy="10" r="4"/><path d="M10 1.5v2M10 16.5v2M1.5 10h2M16.5 10h2M4 4l1.4 1.4M14.6 14.6 16 16M16 4l-1.4 1.4M5.4 14.6 4 16"/></svg>
+            </button>
+            <button type="button" class="seg-btn" data-label="dark" role="tab" data-i18n-title="icons.labeltheme.dark" title="Dark text — for light wallpapers">
+              <svg viewBox="0 0 20 20" aria-hidden="true"><path d="M16 11.6A6.5 6.5 0 1 1 8.4 4a5.2 5.2 0 0 0 7.6 7.6z"/></svg>
+            </button>
+          </div>
         </div>
-        <input type="checkbox" id="roundIconsEnabled" class="switch" aria-label="Enable rounded corners">
-      </div>
 
-      <div class="ctrlrow">
-        <span class="ctrl-label" id="labelLabel">Label theme</span>
-        <div class="seg seg-icons" role="tablist" aria-labelledby="labelLabel">
-          <button type="button" class="seg-btn" data-label="auto" role="tab" title="Auto — leave Odoo's own colours">
-            <svg viewBox="0 0 20 20" aria-hidden="true"><path d="M10 3.5a6.5 6.5 0 0 0 0 13z" fill="currentColor" stroke="none"/><circle cx="10" cy="10" r="6.5"/></svg>
-          </button>
-          <button type="button" class="seg-btn" data-label="light" role="tab" title="Light text — for dark wallpapers">
-            <svg viewBox="0 0 20 20" aria-hidden="true"><circle cx="10" cy="10" r="4"/><path d="M10 1.5v2M10 16.5v2M1.5 10h2M16.5 10h2M4 4l1.4 1.4M14.6 14.6 16 16M16 4l-1.4 1.4M5.4 14.6 4 16"/></svg>
-          </button>
-          <button type="button" class="seg-btn" data-label="dark" role="tab" title="Dark text — for light wallpapers">
-            <svg viewBox="0 0 20 20" aria-hidden="true"><path d="M16 11.6A6.5 6.5 0 1 1 8.4 4a5.2 5.2 0 0 0 7.6 7.6z"/></svg>
-          </button>
+        <div class="ctrlrow">
+          <div class="ctrl-text">
+            <span class="ctrl-label" data-i18n="icons.hideNames.label">Hide app names</span>
+            <p class="hint" data-i18n="icons.hideNames.hint">Drops the labels and enlarges the icons.</p>
+          </div>
+          <input type="checkbox" id="hideAppNames" class="switch">
         </div>
-      </div>
-
-      <div class="ctrlrow">
-        <div class="ctrl-text">
-          <span class="ctrl-label">Hide app names</span>
-          <p class="hint">Drops the labels and enlarges the icons.</p>
-        </div>
-        <input type="checkbox" id="hideAppNames" class="switch">
       </div>
     </section>
 
     <!-- ---------- Sfondo ---------- -->
     <section class="card">
       <div class="card-head">
-        <h2>Wallpaper</h2>
+        <h2 data-i18n="wallpaper.title">Wallpaper</h2>
         <input type="checkbox" id="wallpaperEnabled" class="switch">
       </div>
 
@@ -139,24 +153,24 @@
         <!-- Nessun selettore di sorgente: link, file e cartella sono sempre
              tutti visibili e disponibili insieme. -->
         <div class="file-row">
-          <input type="url" id="imageUrl" class="text" placeholder="Paste an image link…" spellcheck="false">
-          <button type="button" class="btn" id="addImageUrl">Add</button>
+          <input type="url" id="imageUrl" class="text" data-i18n-placeholder="wallpaper.url.placeholder" placeholder="Paste an image link…" spellcheck="false">
+          <button type="button" class="btn" id="addImageUrl" data-i18n="wallpaper.url.add">Add</button>
         </div>
 
         <div class="file-row">
-          <button type="button" class="btn btn-wide" id="pickFile">Upload photo or video</button>
+          <button type="button" class="btn btn-wide" id="pickFile" data-i18n="wallpaper.upload.button">Upload photo or video</button>
           <input type="file" id="wallpaperInput" accept="image/png,image/jpeg,image/webp,image/gif,video/mp4,video/webm,video/ogg" hidden>
         </div>
 
         <div class="folderbar" id="folderBar">
-          <button type="button" class="btn btn-wide" id="pickFolder">Link a folder</button>
+          <button type="button" class="btn btn-wide" id="pickFolder" data-i18n="wallpaper.folder.link">Link a folder</button>
           <div class="folderchip" id="folderChip" hidden>
             <svg viewBox="0 0 16 16" aria-hidden="true"><path d="M2.5 4.5h3.8l1.2 1.5h6v6.5a1 1 0 0 1-1 1h-9a1 1 0 0 1-1-1v-8z"/></svg>
             <span id="folderName"></span>
-            <button type="button" class="chip-x chip-sync" id="syncFolder" aria-label="Sync folder" title="Check the folder for new files">
+            <button type="button" class="chip-x chip-sync" id="syncFolder" data-i18n-aria-label="wallpaper.folder.sync.aria" data-i18n-title="wallpaper.folder.sync.title" aria-label="Sync folder" title="Check the folder for new files">
               <svg viewBox="0 0 16 16" aria-hidden="true"><path d="M13 8a5 5 0 0 1-8.9 3.1M3 8a5 5 0 0 1 8.9-3.1M12 4.5v3h-3M4 11.5v-3h3"/></svg>
             </button>
-            <button type="button" class="chip-x" id="unlinkFolder" aria-label="Unlink folder" title="Unlink folder">
+            <button type="button" class="chip-x" id="unlinkFolder" data-i18n-aria-label="wallpaper.folder.unlink" data-i18n-title="wallpaper.folder.unlink" aria-label="Unlink folder" title="Unlink folder">
               <svg viewBox="0 0 16 16" aria-hidden="true"><path d="M4.5 4.5l7 7M11.5 4.5l-7 7"/></svg>
             </button>
           </div>
@@ -169,29 +183,29 @@
              как альтернатива фото/видео. -->
         <div class="tintbox card-pro">
           <div class="tintbox-head">
-            <input type="checkbox" id="tintEnabled" class="switch" title="Use a solid colour or gradient as the wallpaper">
-            <span class="tintbox-title">Solid or gradient</span>
+            <input type="checkbox" id="tintEnabled" class="switch" data-i18n-title="wallpaper.tint.enable.title" title="Use a solid colour or gradient as the wallpaper">
+            <span class="tintbox-title" data-i18n="wallpaper.tint.title">Solid or gradient</span>
             <div class="seg seg-inline" role="tablist" aria-label="Fill type">
-              <button type="button" class="seg-btn" data-fill="solid" role="tab">Solid</button>
-              <button type="button" class="seg-btn" data-fill="gradient" role="tab">Gradient</button>
+              <button type="button" class="seg-btn" data-fill="solid" role="tab" data-i18n="wallpaper.tint.solid">Solid</button>
+              <button type="button" class="seg-btn" data-fill="gradient" role="tab" data-i18n="wallpaper.tint.gradient">Gradient</button>
             </div>
-            <button type="button" class="tintbox-collapse" id="tintCollapse" aria-label="Collapse" aria-expanded="true">
+            <button type="button" class="tintbox-collapse" id="tintCollapse" data-i18n-aria-label="wallpaper.tint.collapse" aria-label="Collapse" aria-expanded="true">
               <svg viewBox="0 0 16 16" aria-hidden="true"><path d="M4 6.5 8 10.5 12 6.5"/></svg>
             </button>
           </div>
 
           <div class="tintbox-body" id="tintBody">
             <div class="tintrow">
-              <label class="swatch-lg" title="Colour 1">
+              <label class="swatch-lg" data-i18n-title="wallpaper.tint.colour1" title="Colour 1">
                 <input type="color" id="tintColor1">
               </label>
-              <label class="swatch-lg" id="tintColor2Wrap" title="Colour 2">
+              <label class="swatch-lg" id="tintColor2Wrap" data-i18n-title="wallpaper.tint.colour2" title="Colour 2">
                 <input type="color" id="tintColor2">
               </label>
               <div class="tint-preview" id="tintPreview"></div>
             </div>
             <div class="slider" id="tintAngleWrap">
-              <label for="tintAngle">Angle <output id="angleOut"></output></label>
+              <label for="tintAngle"><span data-i18n="wallpaper.tint.angle">Angle</span> <output id="angleOut"></output></label>
               <input type="range" id="tintAngle" min="0" max="360" step="5">
             </div>
 
@@ -199,24 +213,24 @@
                  подчиняется общему ползунку Darken снизу. -->
             <div class="logobox">
               <div class="logobox-head">
-                <span class="logobox-title">Logo</span>
+                <span class="logobox-title" data-i18n="wallpaper.logo.title">Logo</span>
                 <div class="file-row">
-                  <button type="button" class="btn" id="pickLogo">Upload logo</button>
-                  <button type="button" class="btn btn-quiet" id="clearLogo" hidden>Remove</button>
+                  <button type="button" class="btn" id="pickLogo" data-i18n="wallpaper.logo.upload">Upload logo</button>
+                  <button type="button" class="btn btn-quiet" id="clearLogo" data-i18n="wallpaper.logo.remove" hidden>Remove</button>
                   <input type="file" id="logoInput" accept="image/png,image/jpeg,image/webp,image/gif" hidden>
                 </div>
               </div>
               <div class="logobox-controls" id="logoControls" hidden>
                 <div class="slider">
-                  <label for="logoSize">Size <output id="logoSizeOut"></output></label>
+                  <label for="logoSize"><span data-i18n="wallpaper.logo.size">Size</span> <output id="logoSizeOut"></output></label>
                   <input type="range" id="logoSize" min="40" max="480" step="10">
                 </div>
                 <div class="slider">
-                  <label for="logoX">Horizontal <output id="logoXOut"></output></label>
+                  <label for="logoX"><span data-i18n="wallpaper.logo.horizontal">Horizontal</span> <output id="logoXOut"></output></label>
                   <input type="range" id="logoX" min="0" max="100" step="1">
                 </div>
                 <div class="slider">
-                  <label for="logoY">Vertical <output id="logoYOut"></output></label>
+                  <label for="logoY"><span data-i18n="wallpaper.logo.vertical">Vertical</span> <output id="logoYOut"></output></label>
                   <input type="range" id="logoY" min="0" max="100" step="1">
                 </div>
               </div>
@@ -225,11 +239,11 @@
         </div>
 
         <div class="slider">
-          <label for="wallpaperDim">Darken <output id="dimOut"></output></label>
+          <label for="wallpaperDim"><span data-i18n="wallpaper.darken">Darken</span> <output id="dimOut"></output></label>
           <input type="range" id="wallpaperDim" min="0" max="80" step="5">
         </div>
         <div class="slider">
-          <label for="wallpaperBlur">Blur <output id="blurOut"></output></label>
+          <label for="wallpaperBlur"><span data-i18n="wallpaper.blur">Blur</span> <output id="blurOut"></output></label>
           <input type="range" id="wallpaperBlur" min="0" max="24" step="1">
         </div>
       </div>
@@ -239,43 +253,43 @@
   <!-- ===================== SVILUPPO ===================== -->
   <section id="screenDeveloper" hidden>
     <section class="card card-pro">
-      <div class="card-head"><h2>On-page noise</h2></div>
+      <div class="card-head"><h2 data-i18n="dev.noise.title">On-page noise</h2></div>
       <div class="ctrlrow">
         <div class="ctrl-text">
-          <span class="ctrl-label">Hide the trial banner</span>
-          <p class="hint">Removes the "database will be deleted" notice and its overlay.</p>
+          <span class="ctrl-label" data-i18n="dev.noise.trial.label">Hide the trial banner</span>
+          <p class="hint" data-i18n="dev.noise.trial.hint">Removes the "database will be deleted" notice and its overlay.</p>
         </div>
         <input type="checkbox" id="hideTrialBanner" class="switch">
       </div>
       <div class="ctrlrow">
         <div class="ctrl-text">
-          <span class="ctrl-label">Hide the neutralized-database banner</span>
-          <p class="hint">The red strip warning that this database sends no real e-mail.</p>
+          <span class="ctrl-label" data-i18n="dev.noise.neutralize.label">Hide the neutralized-database banner</span>
+          <p class="hint" data-i18n="dev.noise.neutralize.hint">The red strip warning that this database sends no real e-mail.</p>
         </div>
         <input type="checkbox" id="hideNeutralizeBanner" class="switch">
       </div>
     </section>
 
     <section class="card card-pro">
-      <div class="card-head"><h2>Tools</h2></div>
+      <div class="card-head"><h2 data-i18n="dev.tools.title">Tools</h2></div>
       <div class="ctrlrow">
         <div class="ctrl-text">
-          <span class="ctrl-label">Open in developer mode</span>
-          <p class="hint">Reloads once with <code>?debug=1</code> when it isn't already on.</p>
+          <span class="ctrl-label" data-i18n="dev.tools.debug.label">Open in developer mode</span>
+          <p class="hint" data-i18n-html="dev.tools.debug.hint">Reloads once with <code>?debug=1</code> when it isn't already on.</p>
         </div>
         <input type="checkbox" id="debugMode" class="switch">
       </div>
       <div class="ctrlrow">
         <div class="ctrl-text">
-          <span class="ctrl-label">Copy field names on click</span>
-          <p class="hint">Click a field label to copy its technical name. Needs developer mode.</p>
+          <span class="ctrl-label" data-i18n="dev.tools.copyfields.label">Copy field names on click</span>
+          <p class="hint" data-i18n="dev.tools.copyfields.hint">Click a field label to copy its technical name. Needs developer mode.</p>
         </div>
         <input type="checkbox" id="copyFieldNames" class="switch">
       </div>
       <div class="ctrlrow">
         <div class="ctrl-text">
-          <span class="ctrl-label">Shell interface tweaks</span>
-          <p class="hint">On Odoo.sh's editor: adds an <code>odoo-bin shell</code> item to the menu bar, and quick "Zip folder" / "Update module" commands in the file browser.</p>
+          <span class="ctrl-label" data-i18n="dev.tools.shellui.label">Shell interface tweaks</span>
+          <p class="hint" data-i18n-html="dev.tools.shellui.hint">On Odoo.sh's editor: adds an <code>odoo-bin shell</code> item to the menu bar, and quick "Zip folder" / "Update module" commands in the file browser.</p>
         </div>
         <input type="checkbox" id="shellUi" class="switch">
       </div>
@@ -283,21 +297,21 @@
 
     <section class="card card-pro">
       <div class="card-head">
-        <h2>Environment badge</h2>
+        <h2 data-i18n="dev.badge.title">Environment badge</h2>
         <input type="checkbox" id="badgeEnabled" class="switch">
       </div>
 
       <div class="sub" id="badgePanel">
         <div class="badgerow">
           <div class="corners" id="corners" role="radiogroup" aria-label="Badge corner">
-            <button type="button" class="corner" data-corner="tl" role="radio" aria-label="Top left"><i></i></button>
-            <button type="button" class="corner" data-corner="tr" role="radio" aria-label="Top right"><i></i></button>
-            <button type="button" class="corner" data-corner="bl" role="radio" aria-label="Bottom left"><i></i></button>
-            <button type="button" class="corner" data-corner="br" role="radio" aria-label="Bottom right"><i></i></button>
+            <button type="button" class="corner" data-corner="tl" role="radio" data-i18n-aria-label="dev.badge.corner.tl" aria-label="Top left"><i></i></button>
+            <button type="button" class="corner" data-corner="tr" role="radio" data-i18n-aria-label="dev.badge.corner.tr" aria-label="Top right"><i></i></button>
+            <button type="button" class="corner" data-corner="bl" role="radio" data-i18n-aria-label="dev.badge.corner.bl" aria-label="Bottom left"><i></i></button>
+            <button type="button" class="corner" data-corner="br" role="radio" data-i18n-aria-label="dev.badge.corner.br" aria-label="Bottom right"><i></i></button>
           </div>
           <div class="badgeside">
             <div class="slider">
-              <label for="badgeSize">Text size <output id="badgeSizeOut"></output></label>
+              <label for="badgeSize"><span data-i18n="dev.badge.textsize">Text size</span> <output id="badgeSizeOut"></output></label>
               <input type="range" id="badgeSize" min="9" max="22" step="1">
             </div>
             <div class="badgepreview" id="badgePreview">PROD</div>
@@ -305,15 +319,15 @@
         </div>
 
         <div class="palette" id="palette" role="radiogroup" aria-label="Badge colour">
-          <button type="button" class="sw sw-auto" data-color="auto" role="radio" title="Colour by environment"><span></span></button>
-          <label class="sw sw-custom" title="Custom colour">
+          <button type="button" class="sw sw-auto" data-color="auto" role="radio" data-i18n-title="dev.badge.colorauto.title" title="Colour by environment"><span></span></button>
+          <label class="sw sw-custom" data-i18n-title="dev.badge.colorcustom.title" title="Custom colour">
             <input type="color" id="badgeCustom">
           </label>
         </div>
 
         <div class="ctrlrow">
           <div class="ctrl-text">
-            <span class="ctrl-label">Never show it on this domain</span>
+            <span class="ctrl-label" data-i18n="dev.badge.neverhost.label">Never show it on this domain</span>
             <p class="hint" id="badgeHiddenHint">Applies to the site in the active tab.</p>
           </div>
           <input type="checkbox" id="badgeHidden" class="switch">
@@ -325,27 +339,28 @@
   <!-- ===================== LIBRERIA ===================== -->
   <section id="screenLibrary" hidden>
     <div class="libhead">
-      <button type="button" class="iconbtn" id="libBack" aria-label="Back">
+      <button type="button" class="iconbtn" id="libBack" data-i18n-aria-label="library.back" aria-label="Back">
         <svg viewBox="0 0 16 16" aria-hidden="true"><path d="M10 2.5 4.5 8l5.5 5.5"/></svg>
       </button>
-      <span class="libtitle">Wallpapers</span>
+      <span class="libtitle" data-i18n="library.title">Wallpapers</span>
       <span class="libcount" id="libCount"></span>
     </div>
     <div class="libgrid" id="libGrid"></div>
-    <p class="libempty" id="libEmpty" hidden>Images you pick are kept here. Add one from the wallpaper section.</p>
+    <p class="libempty" id="libEmpty" data-i18n="library.empty" hidden>Images you pick are kept here. Add one from the wallpaper section.</p>
   </section>
 
   <footer class="foot" id="foot">
-    <a class="foot-help" href="https://discord.gg/WCe8E7ANz" target="_blank" rel="noopener noreferrer">
-      <svg viewBox="0 0 16 16" aria-hidden="true"><path d="M5.5 4.5C7 3.7 8.9 3.7 10.5 4.5M4.5 11c2.3 1 4.7 1 7 0M5.7 10c-2-.6-2.7-1.4-2.7-1.4S3.7 5 5.5 4.1M10.3 10c2-.6 2.7-1.4 2.7-1.4S12.3 5 10.5 4.1M6 8.2c0 .5-.4 1-.9 1s-.9-.5-.9-1 .4-1 .9-1 .9.5.9 1M10.8 8.2c0 .5-.4 1-.9 1s-.9-.5-.9-1 .4-1 .9-1 .9.5.9 1"/></svg>
-      Need help? Join our Discord
+    <a class="foot-help" href="https://discord.gg/MPurJaknxf" target="_blank" rel="noopener noreferrer">
+      <svg viewBox="0 0 16 16" aria-hidden="true"><circle cx="8" cy="8" r="6.5"/><path d="M6.2 6.3a1.8 1.8 0 0 1 3.5.5c0 1.2-1.7 1.3-1.7 2.6"/><circle cx="8" cy="11.6" r="0.15" fill="currentColor" stroke-width="0.6"/></svg>
+      <span data-i18n="footer.discord">Need help? Join our Discord</span>
     </a>
     <div class="foot-right">
-      <span class="saved" id="saved">Saved</span>
-      <button type="button" class="btn btn-quiet" id="reset">Reset all</button>
+      <span class="saved" id="saved" data-i18n="footer.saved">Saved</span>
+      <button type="button" class="btn btn-quiet" id="reset" data-i18n="footer.reset">Reset all</button>
     </div>
   </footer>
 
+  <script src="../shared/i18n.js"></script>
   <script src="../shared/defaults.js"></script>
   <script src="../shared/themes.js"></script>
   <script src="popup.js"></script>

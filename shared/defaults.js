@@ -146,16 +146,16 @@
 
   /** Interruttori globali: valgono su ogni progetto. */
   globalThis.OST_GLOBAL_DEFAULTS = {
-    enabled: true,
-    hideTrialBanner: true,
-    hideNeutralizeBanner: false,
+    // Spento di default: appena installata, l'estensione non deve toccare
+    // nulla finche' l'utente stesso non la accende dal popup.
+    enabled: false,
     debugMode: false,
-    badgeEnabled: true,
+    badgeEnabled: false,
     badgeCorner: "tr",
     badgeSize: 12,
     badgeColor: "auto", // "auto" oppure un colore esadecimale
     // Copia del nome tecnico di un campo cliccandone l'etichetta.
-    copyFieldNames: true,
+    copyFieldNames: false,
     // Ultima sezione aperta nel popup, per riaprirla dov'era rimasto l'utente.
     lastScreen: "appearance",
     // Ritocchi all'interfaccia dell'editor di Odoo.sh: aggiunge la voce
@@ -164,17 +164,32 @@
     // Il popup di benvenuto PRO va mostrato una sola volta: dopo il primo
     // "I understood" resta disponibile solo su richiesta, dal chip in alto.
     proAcknowledged: false,
+    // Lingua dell'interfaccia: globale, non per dominio, come le altre
+    // preferenze di comodo.
+    language: "en",
   };
 
   /** Aspetto: memorizzato separatamente per ogni dominio. */
   globalThis.OST_PROFILE_DEFAULTS = {
-    // Costruttore icone: tre scelte indipendenti che si combinano.
+    // Rumore sulla pagina: per dominio, non condiviso. Aprire un nuovo
+    // progetto non deve gia' avere questi banner nascosti se non li si e'
+    // mai spenti proprio li'.
+    hideTrialBanner: false,
+    hideNeutralizeBanner: false,
+    // Costruttore icone: tre scelte indipendenti che si combinano. "none" su
+    // tutte e tre significa che l'icona resta esattamente quella di Odoo.
+    // L'intero blocco resta comunque spento finche' questo interruttore non
+    // e' acceso: e' l'interruttore mostrato nella card "App icons".
+    iconsEnabled: false,
     iconBackground: "none",
     iconBorder: "none",
     iconEffect: "none",
     labelColor: "auto",
     hideAppNames: false,
-    roundIconsEnabled: true,
+    // Spento di default: senza, ogni dominio nuovo partiva gia' con un
+    // arrotondamento diverso da quello originale di Odoo, cambiando l'aspetto
+    // delle icone prima ancora che l'utente toccasse qualcosa.
+    roundIconsEnabled: false,
     iconRadius: 18,
     // Dimensione del disegno dentro l'icona: la cornice non cambia mai misura.
     iconSize: "l",
@@ -237,6 +252,12 @@
     }
     g.badgeSize = Math.min(22, Math.max(9, Number(g.badgeSize) || 12));
     g.enabled = g.enabled !== false;
+    // OST_LANGUAGES vive in shared/i18n.js, caricato prima di questo file:
+    // se per qualche motivo non fosse disponibile si ripiega sull'inglese.
+    const validLanguages = (globalThis.OST_LANGUAGES || []).map((l) => l.code);
+    if (validLanguages.length && !validLanguages.includes(g.language)) {
+      g.language = "en";
+    }
     if (!globalThis.OST_SCREENS.includes(g.lastScreen)) {
       g.lastScreen = "appearance";
     }

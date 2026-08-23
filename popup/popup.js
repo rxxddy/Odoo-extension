@@ -11,6 +11,104 @@
   const KEY = globalThis.OST_KEY_SETTINGS;
   const LIB_KEY = globalThis.OST_KEY_LIBRARY;
 
+  // ------------------------------------------------------------------
+  // Traduzioni
+  // ------------------------------------------------------------------
+
+  /**
+   * Restituisce il testo nella lingua corrente, con ripiego automatico
+   * sull'inglese: le lingue non ancora tradotte sono oggetti vuoti in
+   * OST_I18N, quindi finche' restano tali l'utente vede comunque un testo
+   * sensato invece di una chiave grezza o un buco nell'interfaccia.
+   */
+  function t(key, vars) {
+    const table = globalThis.OST_I18N || {};
+    const lang = (table[settings && settings.language] || {})[key];
+    const en = (table.en || {})[key];
+    let text = lang || en || key;
+    if (vars) {
+      for (const [name, value] of Object.entries(vars)) {
+        text = text.replaceAll(`{${name}}`, value);
+      }
+    }
+    return text;
+  }
+
+  /**
+   * Applica le traduzioni a tutto cio' che e' marcato nel markup: il testo
+   * vero e proprio (data-i18n), l'HTML quando serve un tag come <code> o
+   * <strong> al suo interno (data-i18n-html, unico contenuto sotto il nostro
+   * controllo diretto, mai testo esterno), e i singoli attributi
+   * (data-i18n-<nome>). Viene richiamata all'avvio e ad ogni cambio di lingua.
+   */
+  function applyTranslations() {
+    document.documentElement.lang = settings.language;
+    for (const el of document.querySelectorAll("[data-i18n]")) {
+      el.textContent = t(el.dataset.i18n);
+    }
+    for (const el of document.querySelectorAll("[data-i18n-html]")) {
+      el.innerHTML = t(el.dataset.i18nHtml);
+    }
+    for (const el of document.querySelectorAll("[data-i18n-title]")) {
+      el.title = t(el.dataset.i18nTitle);
+    }
+    for (const el of document.querySelectorAll("[data-i18n-placeholder]")) {
+      el.placeholder = t(el.dataset.i18nPlaceholder);
+    }
+    for (const el of document.querySelectorAll("[data-i18n-alt]")) {
+      el.alt = t(el.dataset.i18nAlt);
+    }
+    for (const el of document.querySelectorAll("[data-i18n-aria-label]")) {
+      el.setAttribute("aria-label", t(el.dataset.i18nAriaLabel));
+    }
+  }
+
+  /** Bandiera del codice lingua corrente, per il pulsante del selettore. */
+  function currentFlag() {
+    const found = (globalThis.OST_LANGUAGES || []).find((l) => l.code === settings.language);
+    return found ? found.flag : "🇬🇧";
+  }
+
+  /** Popola l'elenco una sola volta: le voci non cambiano durante la sessione. */
+  function buildLanguagePicker() {
+    const list = el("langList");
+    list.textContent = "";
+    for (const lang of globalThis.OST_LANGUAGES || []) {
+      const li = document.createElement("li");
+      li.setAttribute("role", "option");
+      li.dataset.lang = lang.code;
+      li.innerHTML = `<span class="langpick-flag">${lang.flag}</span><span>${lang.label}</span>`;
+      li.addEventListener("click", () => {
+        closeLanguagePicker();
+        if (lang.code === settings.language) {
+          return;
+        }
+        update({ language: lang.code });
+        applyTranslations();
+        renderLanguagePicker();
+      });
+      list.appendChild(li);
+    }
+  }
+
+  function renderLanguagePicker() {
+    el("langFlag").innerHTML = currentFlag();
+    for (const li of el("langList").children) {
+      li.setAttribute("aria-selected", String(li.dataset.lang === settings.language));
+    }
+  }
+
+  function closeLanguagePicker() {
+    el("langList").hidden = true;
+    el("langBtn").setAttribute("aria-expanded", "false");
+  }
+
+  function toggleLanguagePicker() {
+    const willOpen = el("langList").hidden;
+    el("langList").hidden = !willOpen;
+    el("langBtn").setAttribute("aria-expanded", String(willOpen));
+  }
+
   // Oltre questa larghezza l'immagine viene ricampionata: un data URL enorme
   // rallenterebbe ogni caricamento di pagina.
   const MAX_IMAGE_WIDTH = 2560;
@@ -481,7 +579,7 @@
     grid.textContent = "";
     const total = allEntries().length;
     el("libEmpty").hidden = total > 0;
-    el("libCount").textContent = total ? `${total} saved` : "";
+    el("libCount").textContent = total ? t("library.count", { n: total }) : "";
 
     const active = activeEntry();
     const entries = allEntries().slice().sort((a, b) => (b.usedAt || 0) - (a.usedAt || 0));
@@ -550,14 +648,16 @@
   function render() {
     document.body.classList.toggle("off", !settings.enabled);
     el("enabled").checked = settings.enabled;
-    el("hideTrialBanner").checked = settings.hideTrialBanner;
-    el("hideNeutralizeBanner").checked = settings.hideNeutralizeBanner;
+    el("hideTrialBanner").checked = profile.hideTrialBanner;
+    el("hideNeutralizeBanner").checked = profile.hideNeutralizeBanner;
     el("debugMode").checked = settings.debugMode;
     el("copyFieldNames").checked = settings.copyFieldNames;
     el("shellUi").checked = settings.shellUi;
 
     renderBadgeControls();
 
+    el("iconsEnabled").checked = profile.iconsEnabled;
+    el("iconsPanel").classList.toggle("is-locked", !profile.iconsEnabled);
     el("iconBackground").value = profile.iconBackground;
     el("iconBorder").value = profile.iconBorder;
     el("iconEffect").value = profile.iconEffect;
@@ -565,11 +665,11 @@
     el("hideAppNames").checked = profile.hideAppNames;
     el("scopeNote").textContent =
       profileHost === globalThis.OST_DEFAULT_HOST
-        ? "Appearance applies to every new project"
-        : `Appearance saved for ${profileHost}`;
+        ? t("scope.default")
+        : t("scope.domain", { host: profileHost });
 
     el("wallpaperEnabled").checked = profile.wallpaperEnabled;
-    el("wallpaperPanel").hidden = !profile.wallpaperEnabled;
+    el("wallpaperPanel").classList.toggle("is-locked", !profile.wallpaperEnabled);
 
     // Il campo del link non conserva l'indirizzo gia' applicato: una volta
     // aggiunto lo sfondo il campo torna vuoto, pronto per il prossimo.
@@ -695,8 +795,8 @@
     el("badgeHidden").disabled = !canExclude;
     el("badgeHidden").checked = canExclude && profile.badgeHidden;
     el("badgeHiddenHint").textContent = canExclude
-      ? `Never show it on ${host}`
-      : "Available on Odoo project domains only.";
+      ? t("dev.badge.neverhost.hintOdoo", { host: host })
+      : t("dev.badge.neverhost.hintOther");
 
     const env = environment || "PROD";
     const preview = el("badgePreview");
@@ -1158,10 +1258,10 @@
       update({ enabled: e.target.checked })
     );
     el("hideTrialBanner").addEventListener("change", (e) =>
-      update({ hideTrialBanner: e.target.checked })
+      updateProfile({ hideTrialBanner: e.target.checked })
     );
     el("hideNeutralizeBanner").addEventListener("change", (e) =>
-      update({ hideNeutralizeBanner: e.target.checked })
+      updateProfile({ hideNeutralizeBanner: e.target.checked })
     );
     el("debugMode").addEventListener("change", (e) =>
       update({ debugMode: e.target.checked })
@@ -1204,6 +1304,10 @@
     for (const btn of document.querySelectorAll(".seg-btn[data-label]")) {
       btn.addEventListener("click", () => updateProfile({ labelColor: btn.dataset.label }));
     }
+
+    el("iconsEnabled").addEventListener("change", (e) =>
+      updateProfile({ iconsEnabled: e.target.checked })
+    );
 
     el("wallpaperEnabled").addEventListener("change", (e) =>
       updateProfile({ wallpaperEnabled: e.target.checked })
@@ -1318,6 +1422,17 @@
 
     el("copyDb").addEventListener("click", copyDatabase);
 
+    el("langBtn").addEventListener("click", (e) => {
+      e.stopPropagation();
+      toggleLanguagePicker();
+    });
+    // Clic fuori dall'elenco: lo si chiude, come qualunque altro menu a tendina.
+    document.addEventListener("click", (e) => {
+      if (!el("langPick").contains(e.target)) {
+        closeLanguagePicker();
+      }
+    });
+
     el("proChip").addEventListener("click", () => {
       el("proOverlay").hidden = false;
     });
@@ -1410,7 +1525,12 @@
   function showDatabase(database) {
     const label = el("dbname");
     const name = database || host;
+    // Senza questo ramo, il testo segnaposto tradotto dell'HTML sarebbe stato
+    // sovrascritto una volta sola all'avvio e poi mai piu' aggiornato alla
+    // lingua scelta: meglio scriverlo sempre da qui con t().
     if (!name) {
+      label.textContent = t("header.db.none");
+      label.dataset.full = "";
       return;
     }
     label.textContent = name;
@@ -1481,31 +1601,6 @@
   // ------------------------------------------------------------------
 
   /**
-   * Fino alla v0.4 aspetto e sfondo stavano nel record globale. Alla prima
-   * apertura vengono copiati nel profilo di riferimento, cosi' ogni progetto
-   * non ancora personalizzato conserva l'aspetto che l'utente aveva scelto.
-   */
-  function migrateLegacy(record) {
-    const legacy = record[globalThis.OST_KEY_SETTINGS];
-    const defaultKey = globalThis.ostProfileKey(globalThis.OST_DEFAULT_HOST);
-    const defaultMediaKey = globalThis.ostMediaKey(globalThis.OST_DEFAULT_HOST);
-    const patch = {};
-
-    if (legacy && !record[defaultKey]) {
-      patch[defaultKey] = globalThis.ostNormalizeProfile(legacy);
-    }
-    if (record[globalThis.OST_LEGACY_MEDIA] && !record[defaultMediaKey]) {
-      patch[defaultMediaKey] = globalThis.ostNormalizeMedia(
-        record[globalThis.OST_LEGACY_MEDIA]
-      );
-    }
-    if (Object.keys(patch).length) {
-      chrome.storage.local.set(patch);
-    }
-    return patch;
-  }
-
-  /**
    * Carica lo stato per la scheda attiva e ridisegna l'interfaccia. Non tocca
    * mai i gestori di evento: va bene richiamarla piu' volte nella stessa
    * apertura del popup (ad esempio dopo aver riconosciuto un dominio),
@@ -1519,33 +1614,20 @@
     profileHost = globalThis.ostIsOdooHost(host, customHosts) ? host : globalThis.OST_DEFAULT_HOST;
     updateRecognizeBanner(!!(tab && tab.recognized));
 
-    const defaultProfileKey = globalThis.ostProfileKey(globalThis.OST_DEFAULT_HOST);
-    const defaultMediaKey = globalThis.ostMediaKey(globalThis.OST_DEFAULT_HOST);
-    const keys = [
-      KEY,
-      LIB_KEY,
-      globalThis.OST_KEY_CUSTOM_HOSTS,
-      profileKey(),
-      defaultProfileKey,
-      mediaKey(),
-      defaultMediaKey,
-      globalThis.OST_LEGACY_MEDIA,
-    ];
+    const keys = [KEY, LIB_KEY, globalThis.OST_KEY_CUSTOM_HOSTS, profileKey(), mediaKey()];
 
     return new Promise((resolve) => {
       chrome.storage.local.get(keys, (record) => {
         const store = record || {};
-        const migrated = migrateLegacy(store);
-        Object.assign(store, migrated);
 
         settings = globalThis.ostNormalizeGlobal(store[KEY]);
         customHosts = globalThis.ostNormalizeCustomHosts(store[globalThis.OST_KEY_CUSTOM_HOSTS]);
-        profile = globalThis.ostNormalizeProfile(
-          store[profileKey()] || store[defaultProfileKey] || store[KEY]
-        );
-        media = globalThis.ostNormalizeMedia(
-          store[mediaKey()] || store[defaultMediaKey] || store[globalThis.OST_LEGACY_MEDIA]
-        );
+        // Nessun ripiego su un profilo condiviso: un dominio senza una voce
+        // propria riceve i valori di fabbrica, non l'aspetto di un altro
+        // progetto. E' esattamente il motivo per cui un progetto aperto per
+        // la prima volta arrivava gia' con sfondo e icone modificati.
+        profile = globalThis.ostNormalizeProfile(store[profileKey()]);
+        media = globalThis.ostNormalizeMedia(store[mediaKey()]);
         library = globalThis.ostNormalizeLibrary(store[LIB_KEY]);
 
         // Lo stato di sola interfaccia riparte allineato al profilo appena
@@ -1596,7 +1678,13 @@
     await refreshState();
     buildPalette();
     buildIconSelects();
+    buildLanguagePicker();
     bind();
+    // Le traduzioni vanno applicate prima di render(): quest'ultimo scrive
+    // testi propri (scopeNote, badgeHiddenHint, libCount) che devono gia'
+    // trovare la lingua giusta pronta in t().
+    applyTranslations();
+    renderLanguagePicker();
     render();
     // Il popup di benvenuto va mostrato una sola volta: dopo la prima
     // conferma resta comunque disponibile su richiesta dal chip PRO.

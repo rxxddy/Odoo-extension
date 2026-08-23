@@ -260,6 +260,21 @@
     const bd = BORDERS[profile.iconBorder] || BORDERS.none;
     const fx = EFFECTS[profile.iconEffect] || EFFECTS.none;
 
+    // Stato del tutto neutro: nessuna dichiarazione, punto. "None" deve
+    // significare "non tocco l'icona", non "la forzo a uno stato che sembra
+    // neutro ma non lo e'" — la vecchia versione dichiarava comunque
+    // `background-color: transparent !important`, che cancellava lo sfondo
+    // proprio di Odoo dietro all'icona anche quando l'utente non aveva
+    // scelto nulla.
+    if (
+      profile.iconBackground === "none" &&
+      profile.iconBorder === "none" &&
+      profile.iconEffect === "none" &&
+      profile.iconSize === "l"
+    ) {
+      return "";
+    }
+
     // Il disegno passa su un livello di sfondo solo quando va rimpicciolito:
     // e' l'unico modo per non farlo ritagliare dalla curva del content box.
     const artMode = profile.iconSize !== "l";
@@ -299,10 +314,18 @@
       decl.push(`background-size: ${sizes.join(", ")} !important;`);
       decl.push("background-repeat: no-repeat !important;");
       decl.push("background-position: center !important;");
-    } else {
+    } else if (profile.iconBackground !== "none") {
+      // Nessun livello di sfondo da comporre, ma uno sfondo E' stato scelto
+      // (una tinta piatta): va comunque tolto qualunque sfondo a immagine
+      // Odoo stesse usando, altrimenti resterebbe visibile sotto la tinta.
       decl.push("background-image: none !important;");
     }
-    decl.push(`background-color: ${bg.layer ? "transparent" : bg.color} !important;`);
+    // background-color si dichiara solo se l'utente ha scelto davvero uno
+    // sfondo: con "none" la proprieta' non si tocca affatto, e resta quella
+    // che Odoo aveva gia' impostato per la card bianca dietro l'icona.
+    if (profile.iconBackground !== "none") {
+      decl.push(`background-color: ${bg.layer ? "transparent" : bg.color} !important;`);
+    }
 
     // Il `!important` va messo su tutti i bordi TRANNE quello animato.
     // Le dichiarazioni !important dentro a @keyframes vengono ignorate per

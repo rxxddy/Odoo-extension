@@ -138,6 +138,72 @@ body.off #screenEditor { opacity: 0.4; pointer-events: none; }
 
 .tabs-spacer { flex: 1; }
 
+/* --- Selettore lingua --- */
+.langpick { position: relative; flex: none; }
+
+.langpick-btn {
+  display: flex;
+  align-items: center;
+  gap: 3px;
+  padding: 5px 6px;
+  border: 1px solid transparent;
+  border-radius: 8px;
+  background: none;
+  cursor: pointer;
+  font-size: 14px;
+  line-height: 1;
+}
+
+.langpick-btn:hover { border-color: var(--line); background: var(--surface-sunk); }
+.langpick-btn svg { width: 9px; height: 9px; fill: none; stroke: var(--ink-soft); stroke-width: 1.8; stroke-linecap: round; stroke-linejoin: round; }
+
+.langpick-list {
+  position: absolute;
+  top: calc(100% + 4px);
+  right: 0;
+  z-index: 40;
+  width: 168px;
+  margin: 0;
+  padding: 5px;
+  list-style: none;
+  border: 1px solid var(--line);
+  border-radius: 11px;
+  background: var(--card);
+  box-shadow: var(--shadow);
+  max-height: 220px;
+  overflow-y: auto;
+}
+
+.langpick-list[hidden] { display: none; }
+
+.langpick-list li {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  padding: 7px 8px;
+  border-radius: 7px;
+  color: var(--ink);
+  font-size: 12px;
+  cursor: pointer;
+}
+
+.langpick-list li:hover { background: var(--surface-sunk); }
+.langpick-list li[aria-selected="true"] { background: color-mix(in srgb, var(--brand) 12%, var(--surface-sunk)); font-weight: 600; }
+.langpick-flag,
+#langFlag {
+  display: flex;
+  align-items: center;
+}
+
+.langpick-flag svg,
+#langFlag svg {
+  width: 17px;
+  height: 12px;
+  border-radius: 2px;
+  display: block;
+  box-shadow: 0 0 0 1px rgba(0, 0, 0, 0.15);
+}
+
 .tab {
   padding: 10px 13px;
   border: 0;
@@ -298,6 +364,7 @@ main[hidden],
   border-radius: 14px;
   background: var(--card);
   box-shadow: var(--shadow);
+  min-width: 0;
 }
 
 .card-head { display: flex; align-items: center; gap: 10px; margin-bottom: 11px; }
@@ -314,6 +381,7 @@ main[hidden],
   overflow: hidden;
   text-overflow: ellipsis;
   white-space: nowrap;
+  min-width: 0; /* Permette al flex item di restringersi correttamente */
 }
 
 .hint { margin: 2px 0 0; color: var(--ink-soft); font-size: 11.5px; }
