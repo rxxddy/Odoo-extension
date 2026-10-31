@@ -40,6 +40,8 @@ can be enabled one address at a time.
   folder for zip, install (`-i`) or update (`-u`); right-click a `.zip` to
   unzip; Ctrl+C copies selected text in the terminal instead of sending SIGINT.
 
+**Languages** - English, Dutch, French, German, Italian and Spanish.
+
 ## Install (unpacked)
 
 1. Open `chrome://extensions` and enable Developer mode.
