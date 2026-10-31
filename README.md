@@ -8,11 +8,9 @@ to 19 and on JupyterLab 3 and 4 (the Odoo.sh editor).
 switch, and every feature behind it, start disabled. Appearance is stored per
 domain, so each project can look different.
 
-<p align="center">
-  <img src="docs/screenshots/wallpaper.png" width="260" alt="Backdrop settings">
-  <img src="docs/screenshots/icons.png" width="260" alt="Icon styles">
-  <img src="docs/screenshots/developer.png" width="260" alt="Script buttons">
-</p>
+[**Install from the Chrome Web Store**](https://chromewebstore.google.com/detail/aepmbkgnghaopmbgjicgkfoagpmgabln)
+
+![UI Enhancer for Odoo](docs/store/promo-1.png)
 
 ## Features
 
@@ -42,7 +40,16 @@ can be enabled one address at a time.
 
 **Languages** - English, Dutch, French, German, Italian and Spanish.
 
-## Install (unpacked)
+## Screenshots
+
+![Animated backdrops](docs/store/promo-2.png)
+![Icon styles](docs/store/promo-3.png)
+![Script buttons](docs/store/promo-4.png)
+![Environment badge](docs/store/promo-5.png)
+
+## Install
+
+Get it from the [Chrome Web Store](https://chromewebstore.google.com/detail/aepmbkgnghaopmbgjicgkfoagpmgabln), or load it unpacked:
 
 1. Open `chrome://extensions` and enable Developer mode.
 2. Click "Load unpacked" and pick this folder.
