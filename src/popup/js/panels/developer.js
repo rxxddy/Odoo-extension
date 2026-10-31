@@ -9,7 +9,8 @@
   const { t, h, card, row, toggle, button, note, svg, textArea } = ns.ui;
   const media = ns.media;
 
-  const COLORS = ["#22e4ff", "#ff3fd8", "#00ff9c", "#ffb800", "#ff3d6e", "#7c5cff", "#b4ff39", "#e6e9f2"];
+  // Buttons get a colour in turn, so neighbours are easy to tell apart.
+  const COLORS = ["#714b67", "#017e84", "#e9a23b", "#d23f3a", "#3f6fd1", "#28a745", "#8a6d3b", "#6b7280"];
   const FLASH_MS = 900;
 
   const editor = { found: false, label: "", checked: false, status: "" };
@@ -98,20 +99,6 @@
       "div",
       { class: "editor" },
       name,
-      h(
-        "div",
-        { class: "swatches" },
-        COLORS.map((c) => {
-          const b = h("button", {
-            type: "button",
-            class: "swatch" + (draft.color === c ? " on" : ""),
-            "aria-label": c,
-            onclick: () => { draft.color = c; actions.notify(); },
-          });
-          b.style.background = c;
-          return b;
-        })
-      ),
       textArea(draft.code, (v) => (draft.code = v), t("sc.codeHint")),
       h(
         "div",
@@ -124,7 +111,6 @@
   }
 
   function scriptsCard() {
-    const s = store.settings;
     const full = store.scripts.length >= globalThis.OST_MAX_SCRIPTS;
     return card(
       [t("sc.title"), h("span", null, `${store.scripts.length}/${globalThis.OST_MAX_SCRIPTS}`)],
@@ -137,8 +123,7 @@
           )
         : null,
       draft ? editorForm() : null,
-      runStatus.text ? note(runStatus.text, runStatus.kind) : note(t("sc.hint"), "muted"),
-      row(t("sc.dock"), t("sc.dockHint"), toggle(s.scriptDock, (v) => actions.setSettings({ scriptDock: v })))
+      runStatus.text ? note(runStatus.text, runStatus.kind) : note(t("sc.hint"), "muted")
     );
   }
 

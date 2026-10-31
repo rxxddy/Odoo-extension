@@ -12,7 +12,7 @@
   const MEDIA_KEY = globalThis.ostMediaKey(HOST);
 
   ns.HOST = HOST;
-  ns.STORAGE_KEYS = [globalThis.OST_KEY_SETTINGS, PROFILE_KEY, MEDIA_KEY, globalThis.OST_KEY_SCRIPTS];
+  ns.STORAGE_KEYS = [globalThis.OST_KEY_SETTINGS, PROFILE_KEY, MEDIA_KEY];
 
   ns.state = {
     // Switches that apply everywhere.
@@ -20,7 +20,6 @@
     // Appearance stored for this domain.
     profile: globalThis.ostNormalizeProfile(null),
     media: globalThis.ostNormalizeMedia(null),
-    scripts: [],
     // Environment label currently shown by the badge ("" when hidden).
     env: "",
   };
@@ -34,6 +33,5 @@
     ns.state.settings = globalThis.ostNormalizeGlobal(record[globalThis.OST_KEY_SETTINGS]);
     ns.state.profile = globalThis.ostNormalizeProfile(record[PROFILE_KEY]);
     ns.state.media = globalThis.ostNormalizeMedia(record[MEDIA_KEY]);
-    ns.state.scripts = globalThis.ostNormalizeScripts(record[globalThis.OST_KEY_SCRIPTS]);
   };
 })(globalThis.OstContent);

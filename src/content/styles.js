@@ -35,7 +35,7 @@
     // guarantee that Odoo's icons stay untouched until the user opts in.
     if (profile.iconsEnabled) {
       chunks.push(globalThis.ostIconCss(profile));
-      chunks.push(globalThis.ostLabelCss(profile.labelColor));
+      chunks.push(globalThis.ostLabelCss(profile));
       if (profile.hideAppNames) {
         chunks.push(globalThis.ostNoLabelsCss());
       }
@@ -47,9 +47,7 @@
     if (settings.shellUi) {
       chunks.push(shellMenuCss());
     }
-    if (settings.scriptDock) {
-      chunks.push(globalThis.ostDockCss());
-    }
+
 
     // Honour the OS preference: no icon animation.
     chunks.push(`

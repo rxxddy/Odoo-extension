@@ -70,12 +70,23 @@
       video.muted = true;
       video.playsInline = true;
       video.preload = "auto";
+      let done = false;
       const finish = (result) => {
+        if (done) return;
+        done = true;
         video.remove();
         resolve(result);
       };
+      // Frame 0 is often black, so capture a moment into the clip instead.
       video.addEventListener(
-        "loadeddata",
+        "loadedmetadata",
+        () => {
+          video.currentTime = Math.min(1, (video.duration || 2) / 10);
+        },
+        { once: true }
+      );
+      video.addEventListener(
+        "seeked",
         () => {
           try {
             const w = 320;
@@ -91,6 +102,7 @@
         },
         { once: true }
       );
+      setTimeout(() => finish(""), 8000);
       video.addEventListener("error", () => finish(""), { once: true });
       video.src = dataUrl;
     });

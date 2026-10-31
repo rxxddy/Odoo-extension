@@ -174,35 +174,19 @@ async function runScript(id, tabId) {
   }
 }
 
-async function dockAllowed() {
-  const store = await chrome.storage.local.get(SETTINGS_KEY);
-  const settings = store[SETTINGS_KEY];
-  return !!(settings && settings.enabled === true && settings.scriptDock === true);
-}
-
 chrome.runtime.onMessage.addListener((message, sender, sendResponse) => {
   if (sender.id !== chrome.runtime.id || !message) {
     return false;
   }
 
-  // Script buttons. From the popup the target tab comes with the message;
-  // from the page dock it is the sender's own tab, and only a saved script
-  // id is accepted, never code.
-  if (message.type === "ost:run-script" && typeof message.id === "string") {
-    if (sender.tab) {
-      dockAllowed().then((allowed) =>
-        allowed ? runScript(message.id, sender.tab.id).then(sendResponse) : sendResponse({ ok: false, error: "dock disabled" })
-      );
-    } else {
-      runScript(message.id, message.tabId).then(sendResponse);
-    }
-    return true;
-  }
-
-  // Only extension pages (the popup) may register a domain. A content script
-  // runs inside web pages and must not be able to.
+  // Only extension pages (the popup) may run scripts or register a domain.
+  // A content script runs inside web pages and must not be able to.
   if (sender.tab) {
     return false;
+  }
+  if (message.type === "ost:run-script" && typeof message.id === "string") {
+    runScript(message.id, message.tabId).then(sendResponse);
+    return true;
   }
   if (message.type === "ost:recognize-host") {
     recognizeHost(message.origin, message.tabId).then(sendResponse);

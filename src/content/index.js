@@ -31,7 +31,6 @@
     ns.banners.hideTrialBanners();
     ns.banners.hideNeutralizeBanner();
     ns.environment.applyBadge();
-    ns.scriptDock.apply();
     ns.editor.applyEditorMenu();
     ns.editor.scanForContextMenus();
     if (ns.wallpaper.wallpaperMode() === "video") {
@@ -100,7 +99,6 @@
     ns.styles.applyCss();
     ns.mediaLayers.applyMediaLayer();
     ns.mediaLayers.applyLogoLayer();
-    ns.scriptDock.apply();
     if (settings.enabled && settings.shellUi && ns.editor.editorPresent()) {
       ns.editor.injectBridge();
     }
@@ -147,9 +145,6 @@
       removed = true;
     }
     ns.fieldNames.removeToast();
-    if (ns.scriptDock.remove()) {
-      removed = true;
-    }
 
     if (document.body) {
       document.body.classList.remove(ns.VIDEO_ON_CLASS);

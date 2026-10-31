@@ -10,11 +10,11 @@
 
   const HOME = "body.o_home_menu_background .o_apps";
 
-  // A stand-in app icon: a coloured square with a simple white glyph.
+  // A neutral stand-in app icon: flat colour with a simple chart glyph.
   const SAMPLE =
     "data:image/svg+xml," +
     encodeURIComponent(
-      '<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 64 64"><defs><linearGradient id="g" x1="0" y1="0" x2="1" y2="1"><stop offset="0" stop-color="#ff8a3d"/><stop offset="1" stop-color="#c2185b"/></linearGradient></defs><rect width="64" height="64" fill="url(#g)"/><path d="M20 44V24l12 10 12-10v20" fill="none" stroke="#fff" stroke-width="5" stroke-linecap="round" stroke-linejoin="round"/></svg>'
+      '<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 64 64"><rect width="64" height="64" fill="#1aa89c"/><rect x="16" y="34" width="8" height="14" rx="2" fill="#fff"/><rect x="28" y="24" width="8" height="24" rx="2" fill="#fff"/><rect x="40" y="16" width="8" height="32" rx="2" fill="#fff" opacity=".85"/></svg>'
     );
 
   const sampleStyle = h("style");
@@ -116,6 +116,21 @@
             (v) => actions.setProfile({ labelColor: v })
           )
         ),
+        row(
+          t("ic.labelFont"),
+          null,
+          h(
+            "select",
+            { class: "select", "aria-label": t("ic.labelFont"), onchange: (e) => actions.setProfile({ labelFont: e.target.value }) },
+            globalThis.OST_LABEL_FONTS.map((f) => h("option", { value: f, selected: f === p.labelFont }, t("lf." + f)))
+          )
+        ),
+        // 9 on the slider stands for "Odoo's own size" (stored as 0).
+        sliderField(t("ic.labelSize"), {
+          min: 9, max: 20, value: p.labelSize || 9,
+          format: (v) => (v === 9 ? t("lf.default") : v + "px"),
+          onInput: (v) => actions.quiet("profile", { labelSize: v === 9 ? 0 : v }),
+        }),
         row(t("ic.hideNames"), null, toggle(p.hideAppNames, (v) => actions.setProfile({ hideAppNames: v })))
       )
     );

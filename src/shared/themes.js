@@ -56,35 +56,17 @@
    */
   const STYLES = {
     none: () => ({ decl: [] }),
-    neon: (a) => ({
-      decl: [
-        `box-shadow: 0 0 0 1.5px ${a}, 0 0 14px ${rgba(a, 0.75)}, 0 0 34px ${rgba(a, 0.35)} !important;`,
-      ],
-      hover: `box-shadow: 0 0 0 2px ${a}, 0 0 20px ${a}, 0 0 50px ${rgba(a, 0.55)} !important;`,
-    }),
-    holo: (a, b) => ({
-      decl: [
-        "border: 2px solid transparent !important;",
-        `background: linear-gradient(#0b0d14, #0b0d14) padding-box, conic-gradient(from var(--ost-angle), ${a}, ${b}, ${a}) border-box !important;`,
-        "animation: ost-holo 4s linear infinite;",
-        `box-shadow: 0 0 18px ${rgba(a, 0.35)} !important;`,
-      ],
-      hover: `box-shadow: 0 0 26px ${rgba(b, 0.6)} !important;`,
-      rules: `
-        @property --ost-angle { syntax: "<angle>"; inherits: false; initial-value: 0deg; }
-        @keyframes ost-holo { to { --ost-angle: 360deg; } }
-      `,
-      animated: true,
-    }),
+    // Liquid glass: heavy blur and saturation, a bright rim that fades
+    // around the edge, and a soft inner sheen like light bending in a lens.
     glass: (a) => ({
-      pad: 7,
+      pad: 8,
       decl: [
-        "background: linear-gradient(145deg, rgba(255, 255, 255, 0.22), rgba(255, 255, 255, 0.05)) !important;",
-        "border: 1px solid rgba(255, 255, 255, 0.3) !important;",
-        "backdrop-filter: blur(14px) saturate(1.6);",
-        "box-shadow: inset 0 1px 0 rgba(255, 255, 255, 0.35), 0 8px 24px rgba(0, 0, 0, 0.25) !important;",
+        "border: 1.5px solid transparent !important;",
+        "background: linear-gradient(160deg, rgba(255, 255, 255, 0.28), rgba(255, 255, 255, 0.06) 45%, rgba(255, 255, 255, 0.14)) padding-box, linear-gradient(135deg, rgba(255, 255, 255, 0.95), rgba(255, 255, 255, 0.15) 35%, rgba(255, 255, 255, 0.05) 65%, rgba(255, 255, 255, 0.7)) border-box !important;",
+        "backdrop-filter: blur(18px) saturate(1.9) brightness(1.08);",
+        "box-shadow: inset 0 1px 1px rgba(255, 255, 255, 0.7), inset 0 -10px 18px rgba(255, 255, 255, 0.1), inset 0 8px 14px rgba(255, 255, 255, 0.12), 0 12px 32px rgba(0, 0, 0, 0.22) !important;",
       ],
-      hover: `box-shadow: inset 0 1px 0 rgba(255, 255, 255, 0.45), 0 0 0 1px ${rgba(a, 0.6)}, 0 12px 30px rgba(0, 0, 0, 0.3) !important;`,
+      hover: `box-shadow: inset 0 1px 1px rgba(255, 255, 255, 0.85), inset 0 -10px 18px rgba(255, 255, 255, 0.16), inset 0 8px 14px rgba(255, 255, 255, 0.18), 0 0 0 1px ${rgba(a, 0.35)}, 0 16px 40px rgba(0, 0, 0, 0.28) !important;`,
     }),
     void: (a, b) => ({
       pad: 9,
@@ -95,17 +77,6 @@
       ],
       hover: `box-shadow: 0 0 0 1px ${a}, 0 0 24px ${rgba(a, 0.5)} !important;`,
     }),
-    aurora: (a, b) => ({
-      pad: 7,
-      decl: [
-        `background: linear-gradient(120deg, ${a}, ${b}, ${a}) 0 0 / 300% 300% !important;`,
-        "animation: ost-aurora 6s ease-in-out infinite;",
-        `box-shadow: 0 8px 22px ${rgba(b, 0.35)} !important;`,
-      ],
-      hover: `box-shadow: 0 10px 30px ${rgba(a, 0.55)} !important;`,
-      rules: "@keyframes ost-aurora { 0%, 100% { background-position: 0% 50%; } 50% { background-position: 100% 50%; } }",
-      animated: true,
-    }),
     chrome: () => ({
       decl: [
         "border: 2px solid transparent !important;",
@@ -113,41 +84,69 @@
         "box-shadow: 0 6px 18px rgba(0, 0, 0, 0.35), inset 0 0 0 1px rgba(255, 255, 255, 0.4) !important;",
       ],
     }),
-    ghost: (a) => ({
-      decl: ["filter: grayscale(1) contrast(1.1) brightness(1.05);", "opacity: 0.72;"],
-      hover: `filter: grayscale(0) drop-shadow(0 0 12px ${rgba(a, 0.7)}); opacity: 1;`,
+    titanium: () => ({
+      pad: 7,
+      decl: [
+        "border: 2px solid transparent !important;",
+        "background: linear-gradient(160deg, #3a3e46, #23262c) padding-box, linear-gradient(150deg, #9aa1ad, #4a4f58 40%, #c3c8d0 60%, #3d4148) border-box !important;",
+        "box-shadow: inset 0 1px 0 rgba(255, 255, 255, 0.12), 0 8px 22px rgba(0, 0, 0, 0.4) !important;",
+      ],
+    }),
+    porcelain: () => ({
+      pad: 8,
+      decl: [
+        "background: linear-gradient(180deg, #ffffff, #eef0f3) !important;",
+        "border: 1px solid rgba(0, 0, 0, 0.06) !important;",
+        "box-shadow: inset 0 1px 0 #ffffff, inset 0 -2px 4px rgba(0, 0, 0, 0.04), 0 1px 2px rgba(0, 0, 0, 0.08), 0 8px 20px rgba(0, 0, 0, 0.12) !important;",
+      ],
+      hover: "box-shadow: inset 0 1px 0 #ffffff, inset 0 -2px 4px rgba(0, 0, 0, 0.04), 0 2px 4px rgba(0, 0, 0, 0.08), 0 14px 30px rgba(0, 0, 0, 0.16) !important;",
+    }),
+    obsidian: () => ({
+      pad: 8,
+      decl: [
+        "background: linear-gradient(165deg, #34343a, #0c0c0f 55%, #18181c) !important;",
+        "border: 1px solid rgba(255, 255, 255, 0.08) !important;",
+        "box-shadow: inset 0 1px 0 rgba(255, 255, 255, 0.22), inset 0 12px 16px -12px rgba(255, 255, 255, 0.18), 0 10px 26px rgba(0, 0, 0, 0.45) !important;",
+      ],
+    }),
+    carbon: () => ({
+      pad: 8,
+      decl: [
+        "background: linear-gradient(160deg, rgba(255, 255, 255, 0.08), transparent 50%), repeating-linear-gradient(45deg, #1b1c1f 0 3px, #26282c 3px 6px) !important;",
+        "border: 1px solid #000000 !important;",
+        "box-shadow: inset 0 1px 0 rgba(255, 255, 255, 0.1), 0 8px 22px rgba(0, 0, 0, 0.45) !important;",
+      ],
     }),
   };
 
+  const SMOOTH = "cubic-bezier(0.22, 1, 0.36, 1)";
   const SPRING = "cubic-bezier(0.34, 1.56, 0.64, 1)";
 
+  /**
+   * Hover motion only, with slow eased transitions. `tile` adds rules on the
+   * tile itself, `group` on the other tiles while one is hovered.
+   */
   const MOTIONS = {
     none: {},
     levitate: { hover: "translate: 0 -7px;" },
     magnet: { hover: "scale: 1.12;", easing: SPRING },
-    glitch: {
-      hoverAnim: "ost-glitch 0.45s steps(2) infinite",
-      rules: `@keyframes ost-glitch {
-        0% { translate: 0 0; filter: drop-shadow(2px 0 #ff00c8) drop-shadow(-2px 0 #00f0ff); }
-        25% { translate: -2px 1px; filter: drop-shadow(-3px 0 #ff00c8) drop-shadow(3px 0 #00f0ff); }
-        50% { translate: 2px -1px; filter: drop-shadow(1px 0 #ff00c8) drop-shadow(-1px 0 #00f0ff) hue-rotate(40deg); }
-        75% { translate: -1px 0; filter: drop-shadow(-2px 0 #ff00c8) drop-shadow(2px 0 #00f0ff); }
-        100% { translate: 0 0; filter: none; }
-      }`,
+    // The icon leans back in 3D, like a card lifted by its bottom edge.
+    tilt: {
+      hover: "rotate: x 18deg; translate: 0 -3px;",
+      easing: SMOOTH,
+      duration: 0.6,
+      tile: "perspective: 420px;",
+      origin: "50% 100%",
     },
-    breathe: {
-      idle: (a) => `ost-breathe-${a.slice(1)} 3.2s ease-in-out infinite`,
-      rules: (a) => `@keyframes ost-breathe-${a.slice(1)} {
-        0%, 100% { filter: drop-shadow(0 0 0 ${rgba(a, 0)}); }
-        50% { filter: drop-shadow(0 0 12px ${rgba(a, 0.8)}); }
-      }`,
+    // The hovered icon stays sharp while the rest of the grid recedes.
+    focus: {
+      hover: "scale: 1.06;",
+      easing: SMOOTH,
+      duration: 0.5,
+      group: "opacity: 0.4; scale: 0.94; filter: saturate(0.4);",
     },
-    drift: {
-      idle: () => "ost-drift 5s ease-in-out infinite",
-      rules: "@keyframes ost-drift { 0%, 100% { translate: 0 0; } 50% { translate: 0 -6px; } }",
-      // Every third icon is out of phase, so the grid ripples instead of bouncing as a block.
-      stagger: true,
-    },
+    // Slow rise with a soft settle, closer to a breath than a jump.
+    glide: { hover: "translate: 0 -5px; scale: 1.04;", easing: SMOOTH, duration: 0.9 },
   };
 
   const INTRO = `
@@ -178,15 +177,17 @@
       anims.push(/animation: ([^;]+);/.exec(decl.find((d) => d.startsWith("animation:")))[1]);
       decl.splice(decl.findIndex((d) => d.startsWith("animation:")), 1);
     }
-    if (motion.idle) {
-      anims.push(motion.idle(p.iconAccent));
-    }
     if (anims.length) {
       decl.push(`animation: ${anims.join(", ")};`);
     }
-    decl.push(`transition: translate 0.3s ${motion.easing || "ease"}, scale 0.3s ${motion.easing || "ease"}, filter 0.25s ease, opacity 0.25s ease, box-shadow 0.25s ease;`);
+    const d = motion.duration || 0.3;
+    const e = motion.easing || "ease";
+    decl.push(`transition: translate ${d}s ${e}, scale ${d}s ${e}, rotate ${d}s ${e}, filter ${d}s ${e}, opacity ${d}s ${e}, box-shadow 0.3s ease;`);
+    if (motion.origin) {
+      decl.push(`transform-origin: ${motion.origin};`);
+    }
 
-    const neutral = !style.decl.length && !shape && !pad && !motion.hover && !motion.idle && !motion.hoverAnim && !p.iconIntro;
+    const neutral = !style.decl.length && !shape && !pad && !motion.hover && !p.iconIntro;
     if (neutral) {
       return "";
     }
@@ -196,15 +197,14 @@
     const hover = [];
     if (motion.hover) hover.push(motion.hover);
     if (style.hover) hover.push(style.hover);
-    if (motion.hoverAnim) hover.push(`animation: ${motion.hoverAnim};`);
     if (hover.length) {
       chunks.push(`${TILE}:hover .o_app_icon, ${TILE}:focus-visible .o_app_icon, ${TILE}.o_focused .o_app_icon {\n  ${hover.join("\n  ")}\n}`);
     }
 
     if (style.rules) chunks.push(style.rules);
-    if (motion.rules) chunks.push(typeof motion.rules === "function" ? motion.rules(p.iconAccent) : motion.rules);
-    if (motion.stagger) {
-      chunks.push(`${TILE}:nth-child(3n+2) .o_app_icon { animation-delay: -1.6s; }\n${TILE}:nth-child(3n) .o_app_icon { animation-delay: -3.2s; }`);
+    if (motion.tile) chunks.push(`${TILE} { ${motion.tile} }`);
+    if (motion.group) {
+      chunks.push(`${HOME} .o_apps:has(.o_app:hover) .o_app:not(:hover) .o_app_icon { ${motion.group} }`);
     }
     if (p.iconIntro) chunks.push(INTRO);
 
@@ -338,107 +338,40 @@
   };
 
 
-  /**
-   * Separate from the icon controls: dark Odoo text vanishes on a dark photo,
-   * which is a readability issue independent of the icon style. The dark theme
-   * also forces `font-size` and `font-weight`; in some views a more specific
-   * Odoo rule made the caption tiny and the wrong color.
-   */
-  const LABELS = {
-    auto: "",
-    light: `
-      ${CAPTION} {
-        color: #ffffff !important;
-        font-size: 0.8125rem !important;
-        font-weight: 500 !important;
-        text-shadow: 0 1px 3px rgba(0, 0, 0, 0.65);
-      }
-      ${BAR_ITEMS} {
-        color: #ffffff !important;
-        text-shadow: 0 1px 3px rgba(0, 0, 0, 0.55);
-      }
-    `,
-    dark: `
-      ${CAPTION} {
-        color: #14161d !important;
-        font-size: 0.8125rem !important;
-        font-weight: 600 !important;
-        text-shadow: 0 1px 2px rgba(255, 255, 255, 0.75);
-      }
-      ${BAR_ITEMS} { color: #14161d !important; }
-    `,
-  };
-
-  globalThis.ostLabelCss = function (mode) {
-    return LABELS[mode] || "";
+  const LABEL_FONTS = {
+    default: "",
+    system: 'system-ui, -apple-system, "Segoe UI", Roboto, sans-serif',
+    serif: 'Georgia, "Times New Roman", serif',
+    mono: "ui-monospace, SFMono-Regular, Menlo, Consolas, monospace",
+    condensed: '"Arial Narrow", "Roboto Condensed", "Helvetica Neue", sans-serif',
   };
 
   /**
-   * Script dock: a small pill in the bottom-left corner that opens into a
-   * row of the user's script buttons on hover or focus.
+   * Caption colour, size and font. Only what the user picked is written, so
+   * "Auto" with the default size and font emits nothing at all.
    */
-  globalThis.ostDockCss = function () {
-    return `
-      #ost-script-dock {
-        position: fixed;
-        left: 14px;
-        bottom: 14px;
-        z-index: 2147482000;
-        display: flex;
-        align-items: center;
-        gap: 6px;
-        padding: 5px;
-        border: 1px solid rgba(34, 228, 255, 0.35);
-        border-radius: 12px;
-        background: rgba(7, 8, 13, 0.82);
-        backdrop-filter: blur(12px);
-        box-shadow: 0 0 0 1px rgba(0, 0, 0, 0.4), 0 10px 30px rgba(0, 0, 0, 0.45), 0 0 18px rgba(34, 228, 255, 0.15);
-        font: 600 11px/1 ui-monospace, SFMono-Regular, Menlo, Consolas, monospace;
-        letter-spacing: 0.04em;
-      }
-      #ost-script-dock .ost-dock-handle {
-        display: grid;
-        place-items: center;
-        width: 26px;
-        height: 26px;
-        border-radius: 8px;
-        color: #22e4ff;
-        cursor: default;
-      }
-      #ost-script-dock .ost-dock-list {
-        display: flex;
-        gap: 6px;
-        max-width: 0;
-        overflow: hidden;
-        opacity: 0;
-        transition: max-width 0.35s cubic-bezier(0.2, 0.8, 0.2, 1), opacity 0.2s ease;
-      }
-      #ost-script-dock:hover .ost-dock-list,
-      #ost-script-dock:focus-within .ost-dock-list {
-        max-width: 80vw;
-        opacity: 1;
-      }
-      #ost-script-dock button {
-        flex: none;
-        height: 26px;
-        padding: 0 10px;
-        border: 1px solid var(--c);
-        border-radius: 8px;
-        background: color-mix(in srgb, var(--c) 14%, transparent);
-        color: #eef2ff;
-        font: inherit;
-        white-space: nowrap;
-        cursor: pointer;
-        transition: background 0.15s ease, box-shadow 0.15s ease, translate 0.15s ease;
-      }
-      #ost-script-dock button:hover {
-        background: color-mix(in srgb, var(--c) 30%, transparent);
-        box-shadow: 0 0 14px color-mix(in srgb, var(--c) 60%, transparent);
-        translate: 0 -1px;
-      }
-      #ost-script-dock button.ost-ok { box-shadow: 0 0 0 2px #00ff9c; }
-      #ost-script-dock button.ost-err { box-shadow: 0 0 0 2px #ff3d6e; }
-    `;
+  globalThis.ostLabelCss = function (p) {
+    const decl = [];
+    if (p.labelColor === "white") {
+      decl.push("color: #ffffff !important;", "text-shadow: 0 1px 2px rgba(0, 0, 0, 0.45);");
+    } else if (p.labelColor === "black") {
+      decl.push("color: #111111 !important;", "text-shadow: 0 1px 1px rgba(255, 255, 255, 0.5);");
+    }
+    if (p.labelSize) {
+      decl.push(`font-size: ${p.labelSize}px !important;`);
+    }
+    if (LABEL_FONTS[p.labelFont]) {
+      decl.push(`font-family: ${LABEL_FONTS[p.labelFont]} !important;`);
+    }
+    const chunks = [];
+    if (decl.length) {
+      chunks.push(`${CAPTION} { ${decl.join(" ")} }`);
+    }
+    if (p.labelColor !== "auto") {
+      // The top bar sits on the same backdrop, so it follows the caption colour.
+      chunks.push(`${BAR_ITEMS} { color: ${p.labelColor === "white" ? "#ffffff" : "#111111"} !important; }`);
+    }
+    return chunks.join("\n");
   };
 
   /** Copy confirmation toast. Bottom left, out of flow, ignores clicks so it never covers anything. */

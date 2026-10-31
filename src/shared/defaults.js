@@ -12,7 +12,7 @@
 
   G.OST_KEY_SETTINGS = "ost_settings";
   G.OST_KEY_LIBRARY = "ost_library";
-  // User scripts shown as buttons in the Developer tab and the page dock.
+  // User scripts shown as buttons in the Developer tab.
   G.OST_KEY_SCRIPTS = "ost_scripts";
   // Hosts outside *.odoo.com / *.odoo.sh that the user marked as Odoo (e.g. localhost).
   G.OST_KEY_CUSTOM_HOSTS = "ost_custom_hosts";
@@ -71,9 +71,10 @@
 
   G.OST_CORNERS = ["tl", "tr", "bl", "br"];
   G.OST_TABS = ["wallpaper", "icons", "logos", "workspace", "developer", "settings"];
-  G.OST_LABEL_MODES = ["auto", "light", "dark"];
-  G.OST_ICON_STYLES = ["none", "neon", "holo", "glass", "void", "aurora", "chrome", "ghost"];
-  G.OST_ICON_MOTIONS = ["none", "levitate", "magnet", "glitch", "breathe", "drift"];
+  G.OST_LABEL_MODES = ["auto", "white", "black"];
+  G.OST_LABEL_FONTS = ["default", "system", "serif", "mono", "condensed"];
+  G.OST_ICON_STYLES = ["none", "glass", "void", "chrome", "titanium", "porcelain", "obsidian", "carbon"];
+  G.OST_ICON_MOTIONS = ["none", "levitate", "magnet", "tilt", "focus", "glide"];
   G.OST_ICON_SHAPES = ["native", "soft", "round", "circle", "chamfer"];
   G.OST_WALLPAPER_KINDS = ["fx", "color", "image", "video"];
   G.OST_WALLPAPER_FX = ["aurora", "grid", "nebula", "dots", "scan"];
@@ -92,8 +93,6 @@
     copyFieldNames: false,
     // Adds the odoo-bin shell / psql entries and file-browser commands in the Odoo.sh editor.
     shellUi: false,
-    // Floating bar with the user's script buttons on Odoo pages.
-    scriptDock: false,
     badgeEnabled: false,
     badgeCorner: "tr",
     badgeSize: 12,
@@ -118,6 +117,9 @@
     // Icons fade in one after another when the home menu opens.
     iconIntro: false,
     labelColor: "auto",
+    // Caption size in px; 0 keeps Odoo's own.
+    labelSize: 0,
+    labelFont: "default",
     hideAppNames: false,
 
     // Wallpaper.
@@ -196,6 +198,8 @@
     p.iconMotion = pick(p.iconMotion, G.OST_ICON_MOTIONS, "none");
     p.iconShape = pick(p.iconShape, G.OST_ICON_SHAPES, "native");
     p.labelColor = pick(p.labelColor, G.OST_LABEL_MODES, "auto");
+    p.labelFont = pick(p.labelFont, G.OST_LABEL_FONTS, "default");
+    p.labelSize = p.labelSize ? clamp(p.labelSize, 10, 20, 0) : 0;
     p.wallpaperKind = pick(p.wallpaperKind, G.OST_WALLPAPER_KINDS, "fx");
     p.wallpaperFx = pick(p.wallpaperFx, G.OST_WALLPAPER_FX, "aurora");
     p.imageSource = pick(p.imageSource, ["url", "file", "folder"], "url");

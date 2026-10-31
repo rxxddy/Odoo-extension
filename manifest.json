@@ -53,7 +53,6 @@
         "src/content/debug-mode.js",
         "src/content/field-names.js",
         "src/content/editor.js",
-        "src/content/script-dock.js",
         "src/content/messages.js",
         "src/content/index.js"
       ],

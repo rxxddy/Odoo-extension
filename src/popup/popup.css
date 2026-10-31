@@ -644,6 +644,15 @@ button {
   box-shadow: 0 0 0 1px var(--primary);
 }
 
+.tile-art {
+  position: absolute;
+  inset: 0;
+  width: 100%;
+  height: 100%;
+  object-fit: cover;
+  pointer-events: none;
+}
+
 .tile-name {
   position: absolute;
   inset: auto 0 0;

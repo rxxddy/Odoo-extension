@@ -132,11 +132,26 @@
     return entry.source === "url" ? p.imageSource === "url" && p.imageUrl === entry.url : p.imageSource !== "url" && p.imageName === entry.name;
   }
 
+  /**
+   * Thumbnail as a real element, not a CSS background, so a missing or broken
+   * thumbnail can fall back to the media itself instead of a grey square.
+   */
+  function tileArt(entry, kind) {
+    const source = entry.data || entry.url || "";
+    if (kind === "video" && !entry.thumb && source) {
+      return h("video", { class: "tile-art", src: source + "#t=1", muted: true, preload: "metadata", playsInline: true });
+    }
+    const img = h("img", { class: "tile-art", src: entry.thumb || source, alt: "", loading: "lazy" });
+    img.addEventListener("error", () => {
+      if (kind === "image" && source && img.src !== source) img.src = source;
+      else img.remove();
+    });
+    return img;
+  }
+
   function tile(entry, kind, onPick, onRemove) {
     const el = h("button", { type: "button", class: "tile" + (isActive(entry, kind) ? " on" : ""), title: entry.name, onclick: onPick });
-    if (entry.thumb) {
-      el.style.backgroundImage = `url("${entry.thumb.replace(/["\\\r\n()]/g, encodeURIComponent)}")`;
-    }
+    el.append(tileArt(entry, kind));
     el.append(h("span", { class: "tile-name" }, entry.name));
     if (kind === "video") {
       el.append(h("span", { class: "tile-kind" }, "▶"));
@@ -157,7 +172,7 @@
       }
     }
     if (kind === "video" && store.profile.videoSource === "file" && store.media.videoName) {
-      tiles.push(tile({ name: store.media.videoName, thumb: store.media.videoThumb }, "video", () => {}, null));
+      tiles.push(tile({ name: store.media.videoName, thumb: store.media.videoThumb, data: store.media.videoData }, "video", () => {}, null));
     }
     for (const e of media.folder.entries.filter((x) => x.kind === kind)) {
       tiles.push(

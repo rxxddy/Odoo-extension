@@ -8,16 +8,22 @@ to 19 and on JupyterLab 3 and 4 (the Odoo.sh editor).
 switch, and every feature behind it, start disabled. Appearance is stored per
 domain, so each project can look different.
 
+<p align="center">
+  <img src="docs/screenshots/wallpaper.png" width="260" alt="Backdrop settings">
+  <img src="docs/screenshots/icons.png" width="260" alt="Icon styles">
+  <img src="docs/screenshots/developer.png" width="260" alt="Script buttons">
+</p>
+
 ## Features
 
 **Backdrop** - animated effects (aurora, synth grid, nebula, dots, scanlines)
 in any two colours, a plain colour or gradient, a photo (link, upload or a
 linked local folder) or a looping video, with darkening and blur.
 
-**Icons** - eight frame styles (neon, holo, glass, void, aurora, chrome,
-ghost, or Odoo's own), accent colours, motion (levitate, magnet, glitch,
-breathe, drift), a boot animation, shape, artwork size and caption colour.
-Samples in the popup use the exact CSS the page gets.
+**Icons** - frame styles (liquid glass, void, chrome, titanium, porcelain,
+obsidian, carbon, or Odoo's own), smooth hover motion (levitate, magnet, tilt,
+focus, glide), a boot animation, shape, artwork size, and caption colour,
+size and font. Samples in the popup use the exact CSS the page gets.
 
 **Logos** - any number of logos over any backdrop, placed with sliders.
 
@@ -30,7 +36,6 @@ can be enabled one address at a time.
 - Click a field label to copy its technical name.
 - Script buttons: give a button a name, a colour and some JavaScript. A click
   runs it on the current tab in the page context, like the DevTools console.
-  The buttons can also float in a small dock on Odoo pages.
 - Odoo.sh editor: `odoo-bin shell` and `psql` in the menu bar; right-click a
   folder for zip, install (`-i`) or update (`-u`); right-click a `.zip` to
   unzip; Ctrl+C copies selected text in the terminal instead of sending SIGINT.
@@ -63,9 +68,8 @@ hosts. The popup follows the same pattern with `OstPopup`.
 
 - The editor bridge accepts only a fixed set of command shapes, and every
   folder name is shell-quoted before it reaches the terminal.
-- Script code is stored by the extension and only run by the service worker.
-  The page dock sends a script id, never code, so a page cannot make the
-  extension execute anything the user did not save.
+- Script code is stored by the extension and run by the service worker only
+  on a request from the popup; web pages cannot trigger it.
 - Only extension pages can register a custom domain, and permission is
   requested for that single origin, never for all sites.
 
