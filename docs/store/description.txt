@@ -1,0 +1,200 @@
+UI Enhancer for Odoo — Chrome Web Store description
+====================================================
+
+=== English (en) ===
+Make Odoo look and work the way you want.
+
+UI Enhancer restyles the Odoo home screen and adds everyday tools for people who live in Odoo: consultants, developers and power users. Works with Odoo 16 to 19, on odoo.com, odoo.sh and your own servers.
+
+BACKDROPS
+• Animated effects: aurora, synth grid, nebula, dots, scanlines, in any two colours
+• Plain colour or gradient, your own photo or a looping video
+• Darken and blur to keep icons readable
+
+APP ICONS
+• Frame styles: liquid glass, void, chrome, titanium, porcelain, obsidian, carbon
+• Smooth hover motion: levitate, magnet, tilt, focus, glide
+• Boot animation, shape, size, and caption colour, size and font
+
+LOGOS
+• Place any number of logos over your backdrop
+
+WORKSPACE
+• PROD / STAGING / DEV badge so you never edit the wrong database
+• Hide the Odoo.sh trial notice and the neutralised-database banner
+• Enable the extension on localhost or internal domains, one address at a time
+
+DEVELOPER TOOLS (optional)
+• Script buttons: save JavaScript snippets as buttons and run them on the current tab in one click
+• Automatic developer mode and one-click copy of technical field names
+• Odoo.sh editor: odoo-bin shell and psql in the menu, zip / unzip, install and update modules from the file browser
+
+PRIVATE BY DESIGN
+• Every feature is off until you turn it on
+• Settings are saved per domain, locally in your browser
+• No tracking, no accounts, no external servers
+
+=== Nederlands (nl) ===
+Laat Odoo eruitzien en werken zoals jij wilt.
+
+UI Enhancer geeft het startscherm van Odoo een nieuwe look en voegt handige tools toe voor iedereen die dagelijks met Odoo werkt: consultants, ontwikkelaars en power users. Werkt met Odoo 16 tot en met 19, op odoo.com, odoo.sh en je eigen servers.
+
+ACHTERGRONDEN
+• Geanimeerde effecten: aurora, synthgrid, nevel, stippen, scanlijnen, in twee kleuren naar keuze
+• Effen kleur of verloop, je eigen foto of een video in een lus
+• Verduisteren en vervagen zodat iconen leesbaar blijven
+
+APP-ICONEN
+• Kaderstijlen: vloeibaar glas, void, chroom, titanium, porselein, obsidiaan, carbon
+• Vloeiende hoverbewegingen: zweven, magneet, kantelen, focus, glijden
+• Opstartanimatie, vorm, grootte en kleur, grootte en lettertype van labels
+
+LOGO'S
+• Plaats zoveel logo's als je wilt over je achtergrond
+
+WERKPLEK
+• PROD / STAGING / DEV-label, zodat je nooit de verkeerde database bewerkt
+• Verberg de Odoo.sh-proefmelding en de banner van geneutraliseerde databases
+• Schakel de extensie in op localhost of interne domeinen, adres voor adres
+
+ONTWIKKELAARSTOOLS (optioneel)
+• Scriptknoppen: sla JavaScript-fragmenten op als knoppen en voer ze met één klik uit op het huidige tabblad
+• Automatische ontwikkelaarsmodus en technische veldnamen kopiëren met één klik
+• Odoo.sh-editor: odoo-bin shell en psql in het menu, zip / unzip, modules installeren en bijwerken vanuit de bestandsbrowser
+
+PRIVACY VOOROP
+• Elke functie staat uit tot je hem inschakelt
+• Instellingen worden per domein lokaal in je browser opgeslagen
+• Geen tracking, geen accounts, geen externe servers
+
+=== Français (fr) ===
+Odoo, à votre image.
+
+UI Enhancer redessine l'écran d'accueil d'Odoo et ajoute des outils du quotidien pour ceux qui vivent dans Odoo : consultants, développeurs et utilisateurs avancés. Compatible avec Odoo 16 à 19, sur odoo.com, odoo.sh et vos propres serveurs.
+
+ARRIÈRE-PLANS
+• Effets animés : aurore, grille synthwave, nébuleuse, points, lignes de balayage, dans les deux couleurs de votre choix
+• Couleur unie ou dégradé, votre propre photo ou une vidéo en boucle
+• Assombrissement et flou pour garder les icônes lisibles
+
+ICÔNES D'APPLICATIONS
+• Styles de cadre : verre liquide, void, chrome, titane, porcelaine, obsidienne, carbone
+• Animations fluides au survol : lévitation, aimant, inclinaison, focus, glissement
+• Animation de démarrage, forme, taille, et couleur, taille et police des libellés
+
+LOGOS
+• Placez autant de logos que vous voulez sur votre arrière-plan
+
+ESPACE DE TRAVAIL
+• Badge PROD / STAGING / DEV pour ne jamais modifier la mauvaise base
+• Masquez l'avis d'essai Odoo.sh et la bannière de base neutralisée
+• Activez l'extension sur localhost ou des domaines internes, adresse par adresse
+
+OUTILS DÉVELOPPEUR (facultatifs)
+• Boutons de script : enregistrez des extraits JavaScript sous forme de boutons et exécutez-les sur l'onglet actuel en un clic
+• Mode développeur automatique et copie des noms techniques des champs en un clic
+• Éditeur Odoo.sh : odoo-bin shell et psql dans le menu, zip / unzip, installation et mise à jour de modules depuis l'explorateur de fichiers
+
+RESPECT DE LA VIE PRIVÉE
+• Chaque fonction reste désactivée tant que vous ne l'activez pas
+• Les réglages sont enregistrés par domaine, localement dans votre navigateur
+• Aucun suivi, aucun compte, aucun serveur externe
+
+=== Deutsch (de) ===
+Odoo so, wie Sie es wollen.
+
+UI Enhancer gestaltet den Odoo-Startbildschirm neu und ergänzt praktische Werkzeuge für alle, die täglich mit Odoo arbeiten: Berater, Entwickler und Power-User. Funktioniert mit Odoo 16 bis 19, auf odoo.com, odoo.sh und eigenen Servern.
+
+HINTERGRÜNDE
+• Animierte Effekte: Aurora, Synth-Raster, Nebel, Punkte, Scanlines, in zwei beliebigen Farben
+• Einfarbig oder Verlauf, eigenes Foto oder Video in Endlosschleife
+• Abdunkeln und Weichzeichnen, damit Symbole lesbar bleiben
+
+APP-SYMBOLE
+• Rahmenstile: Flüssigglas, Void, Chrom, Titan, Porzellan, Obsidian, Carbon
+• Sanfte Hover-Bewegungen: Schweben, Magnet, Neigen, Fokus, Gleiten
+• Startanimation, Form, Größe sowie Farbe, Größe und Schrift der Beschriftungen
+
+LOGOS
+• Beliebig viele Logos über dem Hintergrund platzieren
+
+ARBEITSBEREICH
+• PROD- / STAGING- / DEV-Kennzeichnung, damit Sie nie die falsche Datenbank bearbeiten
+• Testhinweis von Odoo.sh und Banner neutralisierter Datenbanken ausblenden
+• Erweiterung auf localhost oder internen Domains aktivieren, Adresse für Adresse
+
+ENTWICKLERWERKZEUGE (optional)
+• Skript-Schaltflächen: JavaScript-Snippets als Schaltflächen speichern und mit einem Klick im aktuellen Tab ausführen
+• Automatischer Entwicklermodus und technische Feldnamen per Klick kopieren
+• Odoo.sh-Editor: odoo-bin shell und psql im Menü, zip / unzip, Module aus dem Dateibrowser installieren und aktualisieren
+
+DATENSCHUTZ VON ANFANG AN
+• Jede Funktion ist aus, bis Sie sie einschalten
+• Einstellungen werden pro Domain lokal im Browser gespeichert
+• Kein Tracking, keine Konten, keine externen Server
+
+=== Italiano (it) ===
+Odoo come lo vuoi tu.
+
+UI Enhancer rinnova la schermata principale di Odoo e aggiunge strumenti quotidiani per chi vive in Odoo: consulenti, sviluppatori e utenti esperti. Funziona con Odoo dalla 16 alla 19, su odoo.com, odoo.sh e sui tuoi server.
+
+SFONDI
+• Effetti animati: aurora, griglia synth, nebulosa, punti, linee di scansione, in due colori a scelta
+• Colore pieno o sfumatura, una tua foto o un video in loop
+• Oscuramento e sfocatura per mantenere leggibili le icone
+
+ICONE DELLE APP
+• Stili di cornice: vetro liquido, void, cromo, titanio, porcellana, ossidiana, carbonio
+• Movimenti fluidi al passaggio del mouse: levita, magnete, inclina, focus, scivola
+• Animazione d'avvio, forma, dimensione e colore, dimensione e carattere delle etichette
+
+LOGHI
+• Posiziona quanti loghi vuoi sopra lo sfondo
+
+AREA DI LAVORO
+• Etichetta PROD / STAGING / DEV per non modificare mai il database sbagliato
+• Nascondi l'avviso di prova di Odoo.sh e il banner del database neutralizzato
+• Attiva l'estensione su localhost o domini interni, un indirizzo alla volta
+
+STRUMENTI PER SVILUPPATORI (facoltativi)
+• Pulsanti script: salva frammenti JavaScript come pulsanti ed eseguili nella scheda attuale con un clic
+• Modalità sviluppatore automatica e copia dei nomi tecnici dei campi con un clic
+• Editor Odoo.sh: odoo-bin shell e psql nel menu, zip / unzip, installazione e aggiornamento dei moduli dal file browser
+
+PRIVACY PRIMA DI TUTTO
+• Ogni funzione resta spenta finché non la attivi
+• Le impostazioni sono salvate per dominio, localmente nel browser
+• Nessun tracciamento, nessun account, nessun server esterno
+
+=== Español (es) ===
+Odoo a tu manera.
+
+UI Enhancer renueva la pantalla de inicio de Odoo y añade herramientas para el día a día de quienes viven en Odoo: consultores, desarrolladores y usuarios avanzados. Funciona con Odoo 16 a 19, en odoo.com, odoo.sh y tus propios servidores.
+
+FONDOS
+• Efectos animados: aurora, cuadrícula synth, nebulosa, puntos, líneas de escaneo, en los dos colores que elijas
+• Color liso o degradado, tu propia foto o un vídeo en bucle
+• Oscurecer y desenfocar para que los iconos sigan legibles
+
+ICONOS DE APLICACIONES
+• Estilos de marco: cristal líquido, void, cromo, titanio, porcelana, obsidiana, carbono
+• Movimientos suaves al pasar el ratón: levitar, imán, inclinar, enfoque, deslizar
+• Animación de inicio, forma, tamaño, y color, tamaño y fuente de las etiquetas
+
+LOGOTIPOS
+• Coloca tantos logotipos como quieras sobre el fondo
+
+ESPACIO DE TRABAJO
+• Distintivo PROD / STAGING / DEV para no editar nunca la base de datos equivocada
+• Oculta el aviso de prueba de Odoo.sh y el banner de base de datos neutralizada
+• Activa la extensión en localhost o dominios internos, dirección por dirección
+
+HERRAMIENTAS PARA DESARROLLADORES (opcionales)
+• Botones de script: guarda fragmentos de JavaScript como botones y ejecútalos en la pestaña actual con un clic
+• Modo desarrollador automático y copia de nombres técnicos de campos con un clic
+• Editor de Odoo.sh: odoo-bin shell y psql en el menú, zip / unzip, instalar y actualizar módulos desde el explorador de archivos
+
+PRIVACIDAD ANTE TODO
+• Todas las funciones están desactivadas hasta que las enciendes
+• Los ajustes se guardan por dominio, localmente en tu navegador
+• Sin seguimiento, sin cuentas, sin servidores externos
